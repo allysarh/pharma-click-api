@@ -108,7 +108,7 @@ module.exports ={
             }
 
 
-            // await transporter.sendMail(mail)
+            await transporter.sendMail(mail)
             res.status(200).send({status: 200, messages: "Register Succes", register: true})
         } catch (error) {
             next(error)
