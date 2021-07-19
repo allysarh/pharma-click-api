@@ -6,9 +6,6 @@ module.exports = {
         try {
             let { email, password } = req.body
             let hashPassword = Crypto.createHmac("sha256", "PHR$$$").update(password).digest("hex")
-            // email check
-            let emailCheck = `SELECT * from user where email = ${db.escape(email)};`
-            emailCheck = await dbQuery(emailCheck)
 
             let login = `SELECT iduser, fullname, gender, age, username, email, role, status, profile_image, otp 
             from user as u
@@ -18,8 +15,11 @@ module.exports = {
             on s.idstatus = u.idstatus
             where email = ${db.escape(email)} and password = ${db.escape(hashPassword)};`
             login = await dbQuery(login)
+
+            console.log(login)
             login[0].cart = []
             login[0].address = []
+            
             let { iduser, fullname, gender, age, username, role, status, profile_image, cart, address, otp } = login[0]
             let token = createToken({ iduser, fullname, gender, age, username, role, status, profile_image, otp })
 
@@ -36,6 +36,9 @@ module.exports = {
             getAddress.forEach((val, i) => {
                 address.push(val)
             })
+
+            res.status(200).send({ iduser, fullname, gender, age, username, role, status, profile_image, cart, address, token })
+            // res.status(200).send(login)
         } catch (error) {
             next(error)
         }
