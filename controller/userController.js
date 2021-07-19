@@ -4,7 +4,6 @@ const Crypto = require('crypto')
 module.exports ={
     resgister: async (req, res, next) => {
         try {
-            console.log(req.body)
             let { nama, username, email, password } = req.body
             // GENERATE OTP
             let char = '0123456789abcdefghijklmnoprstuvwxyz'
@@ -19,15 +18,12 @@ module.exports ={
             console.log(hashPassword)
             let register = `INSERT INTO user (fullname, username, email, idrole, idstatus, password, otp) values (${db.escape(nama)}, ${db.escape(username)}, ${db.escape(email)},  2, 2, ${db.escape(hashPassword)}, ${db.escape(OTP)});`
 
-            console.log(register)
             register = await dbQuery(register)
 
             let iduser = register.insertId
-            console.log(iduser)
 
             // CREATE TOKEN
             let token = createToken({ iduser, username, email })
-            console.log(token)
 
             //  Email configuration
             let mail = {
