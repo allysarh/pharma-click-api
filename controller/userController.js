@@ -54,5 +54,41 @@ module.exports = {
         } catch (error) {
             next(error)
         }
+    },
+    keepLogin: async (req, res, next) => {
+        try {
+
+            let keepLogin = `SELECT iduser, fullname, gender, age, username, email, role, status, profile_image, otp 
+            from user as u
+            LEFT join role as r
+            on r.idrole = u.idrole
+            left join status as s
+            on s.idstatus = u.idstatus
+            where iduser = ${db.escape(req.user.iduser)};`
+            keepLogin = await dbQuery(keepLogin)
+
+            keepLogin[0].cart = []
+            keepLogin[0].address = []
+
+            let { iduser, fullname, gender, age, username, role, status, profile_image, cart, address } = keepLogin[0]
+            let token = createToken({ iduser, fullname, gender, age, username, role, status, profile_image })
+
+            let getCart = `SELECT * from cart where iduser = ${iduser};`
+            getCart = await dbQuery(getCart)
+
+            getCart.forEach((item, index) => {
+                cart.push(item)
+            })
+
+            let getAddress = `SELECT * from address where iduser = ${iduser};`
+            getAddress = await dbQuery(getAddress)
+
+            getAddress.forEach((val, i) => {
+                address.push(val)
+            })
+            res.status(200).send({ iduser, fullname, gender, age, username, role, status, profile_image, cart, address, token })
+        } catch (error) {
+            next(error)
+        }
     }
 }
