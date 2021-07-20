@@ -11,8 +11,8 @@ module.exports = {
             console.log(verifyEmail)
             
             if (verifyEmail.length > 0) {
-                let { iduser, fullname, gender, age, username, idrole, idstatus, profile_image, cart, address } = verifyEmail[0]
-                let token = createToken({ iduser, fullname, gender, age, username, idrole, idstatus, profile_image, cart, address })
+                let { iduser, fullname, gender, age, username, idrole, idstatus, profile_image,otp } = verifyEmail[0]
+                let token = createToken({ iduser, fullname, gender, age, username, idrole, idstatus, profile_image, otp })
 
                 let mail = {
                     from: 'PHARMACLICK-ADMIN <allysa.rahagustiani@gmail.com>',
