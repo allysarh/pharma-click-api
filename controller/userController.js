@@ -4,7 +4,8 @@ const Crypto = require('crypto')
 module.exports = {
     accVerif: async (req, res, next) => {
         try {
-            let accVerif = `UPDATE user set idstatus = 1 where iduser = ${db.escape(req.user.iduser)};`
+            let { otp } = req.body
+            let accVerif = `UPDATE user set idstatus = 1 where iduser = ${db.escape(req.user.iduser)} and otp = ${db.escape(otp)};`
             await dbQuery(accVerif)
 
             res.status(200).send({ status: 200, messages: "Verifikasi berhasil silahkan login!", verif: true })
@@ -26,8 +27,8 @@ module.exports = {
             let getUser = `SELECT * from user where email = ${db.escape(email)};`
             getUser = await dbQuery(getUser)
 
-            if(getUser.length > 0){
-                let { iduser, fullname, gender, age, username, idrole, idstatus, profile_image, otp} = getUser[0]
+            if (getUser.length > 0) {
+                let { iduser, fullname, gender, age, username, idrole, idstatus, profile_image, otp } = getUser[0]
                 let reVerif = `UPDATE user set otp = ${db.escape(OTP)} where iduser = ${db.escape(iduser)};`
 
                 await dbQuery(reVerif)
@@ -42,11 +43,11 @@ module.exports = {
                         <h1>OTP: ${OTP}</h1>
                         </div>`
                 }
-    
+
                 await transporter.sendMail(mail)
                 res.status(200).send({ status: 200, messages: 'Verfication email sent!', reVerif: true })
             } else {
-                res.status(404).send({status: 404, messages: 'Email not registered. Please register!', reVerif: false})
+                res.status(404).send({ status: 404, messages: 'Email not registered. Please register!', reVerif: false })
             }
         } catch (error) {
             next(error)
