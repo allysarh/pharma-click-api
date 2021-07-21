@@ -10,4 +10,6 @@ router.post('/login', userController.login)
 router.get('/keep', readToken, userController.keepLogin)
 router.get('/get', userController.getUser)
 router.post('/forget-pass', userController.forgetPassword)
+router.post('/reset-pass', readToken, userController.resetPassword)
+
 module.exports = router

@@ -300,13 +300,13 @@ module.exports = {
     forgetPassword: async (req, res, next) => {
         try {
             let { email } = req.body
-            
+
             let verifyEmail = `SELECT * from user where email = ${db.escape(email)};`
             verifyEmail = await dbQuery(verifyEmail)
             console.log(verifyEmail)
-            
+
             if (verifyEmail.length > 0) {
-                let { iduser, fullname, gender, age, username, idrole, idstatus, profile_image,otp } = verifyEmail[0]
+                let { iduser, fullname, gender, age, username, idrole, idstatus, profile_image, otp } = verifyEmail[0]
                 let token = createToken({ iduser, fullname, gender, age, username, idrole, idstatus, profile_image, otp })
 
                 let mail = {
@@ -393,7 +393,21 @@ module.exports = {
             } else {
                 res.status(404).send({ status: 404, messages: "Email not found. Make sure your email is registered!", verifyEmail: false })
             }
+        } catch (error) {
+            next(error)
+        }
+    }    ,
+    resetPassword: async (req, res, next) => {
+        try {
+            console.log(req.user)
+            let { password } = req.body
+            let { iduser } = req.user
+            let hashPassword = Crypto.createHmac("sha256", "PHR$$$").update(password).digest("hex")
 
+            let resetPass = `UPDATE user set password = ${db.escape(hashPassword)} WHERE iduser = ${db.escape(iduser)};`
+            await dbQuery(resetPass)
+
+            res.status(200).send({ status: 200, messages: "Reset password success" })
         } catch (error) {
             next(error)
         }
