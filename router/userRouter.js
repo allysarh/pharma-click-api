@@ -7,5 +7,7 @@ router.get('/verif', readToken, userController.accVerif)
 router.post('/re-verif', userController.reVerif)
 router.post('/register', userController.resgister)
 router.post('/login', userController.login)
-
+router.get('/keep', readToken, userController.keepLogin)
+router.get('/get', userController.getUser
+)
 module.exports = router
