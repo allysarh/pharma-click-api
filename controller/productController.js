@@ -4,34 +4,30 @@ const { dbQuery, db } = require('../config/database')
 
 
 module.exports = {
-    getProductPack: async (req, res, next) => {
+    getProduct: async (req, res, next) => {
         try {
-            
-            let getProduct = `SELECT idproduct, product_name, brand, category, description, effect, p.usage, dosage, indication from product as p
-            LEFT join category as c on c.idcategory = p.idcategory
-            LEFT join status as s on s.idstatus = p.idstatus;;`
+
+            let getProduct = `SELECT p.id as product_id, product_name, brand, c.name, description, effect, p.usage, dosage, indication from product as p
+            LEFT join category as c on c.id = p.idcategory`
+
             if (Object.keys(req.query).length > 0) {
                 let searchQuery = []
                 for (props in req.query) {
-                    searchQuery.push(`${props} = ${db.escape(req.query[props])}`)
+                    searchQuery.push(`${props} = ${db.escape(req.query[props].replace('%20', ' '))}`)
                 }
-                getProduct = `SELECT idproduct, product_name, brand, category, description, effect, p.usage, dosage, indication from product as p
-                LEFT join category as c on c.idcategory = p.idcategory
-                LEFT join status as s on s.idstatus = p.idstatus WHERE ${searchQuery.join(" AND ")};`
+                getProduct = getProduct + ` WHERE ${searchQuery.join(" AND ")};`
+
             }
 
             getProduct = await dbQuery(getProduct)
-            let getStock
-            if(req.params.idtype == 'all') {
-                getStock = `SELECT idstock, idproduct, status, netto, qty, total_netto, unit_price, pack_price, unit, type from stock as st
-                LEFT join type as t on t.idtype = st.idtype
-                LEFT join status as s on s.idstatus = st.idstatus;`
-            } else {
-                getStock = `SELECT idstock, idproduct, status, netto, qty, total_netto, unit_price, pack_price, unit, type from stock as st
-                LEFT join type as t on t.idtype = st.idtype
-                LEFT join status as s on s.idstatus = st.idstatus
-                WHERE st.idtype = ${req.params.idtype};`
+            let getStock = `SELECT s.id, idproduct, t.name as type, qty, total_netto, unit_price, ps.name as status from stock as s 
+            LEFT JOIN type as t on t.id = s.idtype
+            LEFT JOIN product_status as ps on ps.id = s.idstatus`
+
+            if (['1', '2'].indexOf(req.params.idtype) > -1) {
+                getStock = getStock + ` WHERE s.idtype = ${req.params.idtype};`
             }
+            console.log(getStock)
             getStock = await dbQuery(getStock)
 
             let getImg = `SELECT * from product_image`
@@ -42,14 +38,14 @@ module.exports = {
                 item.images = []
 
                 getStock.forEach((val, idx) => {
-                    if (val.idproduct == item.idproduct) {
+                    if (val.idproduct == item.product_id) {
                         item.stock.push(val)
                     }
                 })
 
                 getImg.forEach((e, i) => {
-                    if (e.idproduct == item.idproduct) {
-                        item.images.push(e.image)
+                    if (e.idproduct == item.product_id) {
+                        item.images.push(e.image_url)
                     }
                 })
             })
@@ -73,5 +69,6 @@ module.exports = {
         } catch (error) {
 
         }
-    }
+    },
+
 }
