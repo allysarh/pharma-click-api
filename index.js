@@ -9,6 +9,7 @@ const cors = require('cors')
 const bearerToken = require('express-bearer-token')
 const { db } = require('./config/database')
 const bodyParser = require('body-parser');
+const { productRouter } = require('./router')
 
 app.use(express.json())
 app.use(cors())
@@ -20,6 +21,7 @@ app.get('/', (req, res) =>{
     console.log("tes")
     res.status(200).send("TEST pharmaclick api")
 })
+app.use('/product', productRouter)
 
 db.getConnection((err, connection) =>{
     if(err){
