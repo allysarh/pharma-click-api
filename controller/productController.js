@@ -7,7 +7,7 @@ module.exports = {
     getProduct: async (req, res, next) => {
         try {
 
-            let getProduct = `SELECT p.id as product_id, product_name, brand, c.name, description, effect, p.usage, dosage, indication from product as p
+            let getProduct = `SELECT p.id as product_id, product_name, brand, c.name, description, effect, p.usage, dosage, indication, netto, pack_price, unit from product as p
             LEFT join category as c on c.id = p.idcategory`
 
             if (Object.keys(req.query).length > 0) {
