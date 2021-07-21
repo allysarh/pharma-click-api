@@ -36,7 +36,7 @@ module.exports = {
                 let mail = {
                     from: 'PHARMACLICK-ADMIN <allysa.rahagustiani@gmail.com>',
                     to: email,
-                    subject: '[PHARMACLICK RESET PASSWORD]',
+                    subject: '[PHARMACLICK User Verification]',
                     html: `<div style="text-align: center;">
                         <h1> This is email for verify your account</h1>
                         <p> Click <a href="http://localhost:3000/verif/${token}">this link</a> and input this otp</p>
