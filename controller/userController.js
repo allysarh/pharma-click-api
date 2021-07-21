@@ -4,7 +4,8 @@ const Crypto = require('crypto')
 module.exports = {
     accVerif: async (req, res, next) => {
         try {
-            let accVerif = `UPDATE user set idstatus = 1 where iduser = ${db.escape(req.user.iduser)};`
+            let { otp } = req.body
+            let accVerif = `UPDATE user set idstatus = 1 where iduser = ${db.escape(req.user.iduser)} and otp = ${db.escape(otp)};`
             await dbQuery(accVerif)
 
             res.status(200).send({ status: 200, messages: "Verifikasi berhasil silahkan login!", verif: true })
@@ -27,7 +28,7 @@ module.exports = {
                 let mail = {
                     from: 'PHARMACLICK-ADMIN <allysa.rahagustiani@gmail.com>',
                     to: email,
-                    subject: '[PHARMACLICK RESET PASSWORD]',
+                    subject: '[PHARMACLICK User Verification]',
                     html: `<div style="text-align: center;">
                         <h1> This is email for verify your account</h1>
                         <p> Click <a href="http://localhost:3000/verif/${token}">this link</a> and input this otp</p>
@@ -396,7 +397,7 @@ module.exports = {
         } catch (error) {
             next(error)
         }
-    }    ,
+    },
     resetPassword: async (req, res, next) => {
         try {
             console.log(req.user)
