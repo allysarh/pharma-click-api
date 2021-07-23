@@ -746,40 +746,41 @@ module.exports = {
   getImageUser: async (req, res, next) => {
     // getImage = await dbQuery(`select profile_image from user`);
     // console.log("image get", getImage);
-    let getSQL,
-      dataSearch = [];
-    for (let prop in req.query) {
-      dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
+    try {
+      let getSQL,
+        dataSearch = [];
+      for (let prop in req.query) {
+        dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
+      }
+
+      if (dataSearch.length > 0) {
+        getSQL = `SELECT profile_image from user WHERE ${dataSearch.join(
+          " AND "
+        )}`;
+      } else {
+        getSQL = `SELECT profile_image from user`;
+      }
+
+      getProfileImage = await dbQuery(getSQL);
+
+      // console.log("waw", getProfileImage[0].profile_image);
+
+      if (getProfileImage[0].profile_image.length > 0) {
+        let { profile_image } = getProfileImage[0];
+
+        let mims = mime.contentType(profile_image);
+        //console.log("mimimime pri", mims);
+        const contents = await fs1.readFile(profile_image, {
+          encoding: "base64",
+        });
+        let image = `data:${mims};base64,${contents}`;
+        res.status(200).send({ image_path: profile_image, image_url: image });
+      } else {
+        res.status(200).send({ message: "image not found" });
+      }
+    } catch (error) {
+      next(error);
     }
-
-    if (dataSearch.length > 0) {
-      getSQL = `SELECT profile_image from user WHERE ${dataSearch.join(
-        " AND "
-      )}`;
-    } else {
-      getSQL = `SELECT profile_image from user`;
-    }
-
-    getProfileImage = await dbQuery(getSQL);
-
-    // console.log("waw", getProfileImage[0].profile_image);
-    if (
-      getProfileImage[0].profile_image !== null ||
-      getProfileImage[0].profile_image !== undefined
-    ) {
-      let { profile_image } = getProfileImage[0];
-
-      let mims = mime.contentType(profile_image);
-      //console.log("mimimime pri", mims);
-      const contents = await fs1.readFile(profile_image, {
-        encoding: "base64",
-      });
-      let image = `data:${mims};base64,${contents}`;
-      res.status(200).send({ image_path: profile_image, image_url: image });
-    } else {
-      res.status(200).send({ message: "image not found" });
-    }
-    // res.status(200).send({ message: "image not found" });
   },
 
   resetPassword: async (req, res, next) => {
