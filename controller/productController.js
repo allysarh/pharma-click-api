@@ -93,7 +93,7 @@ module.exports = {
         try {
             let deleteProduct = `UPDATE stock set idstatus = 3 where id = ${db.escape(req.params.idstock)};`
             await dbQuery(deleteProduct)
-            console.log(deleteProduct)
+            // console.log(deleteProduct)
             res.status(200).send({ status: 200, messages: 'Product deleted!' })
         } catch (error) {
 
