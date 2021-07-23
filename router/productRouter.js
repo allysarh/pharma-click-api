@@ -4,5 +4,5 @@ const router = express.Router()
 
 router.get('/get/:idtype', productController.getProduct)
 router.post('/add', productController.addProduct)
-
+router.delete('/delete/:idstock', productController.deleteProduct)
 module.exports = router

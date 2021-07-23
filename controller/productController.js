@@ -8,7 +8,9 @@ module.exports = {
         try {
 
             let getProduct = `SELECT p.id as idproduct, product_name, brand, c.name as category, description, effect, p.usage, dosage, indication, netto, pack_price, unit, created_at, updated_at from product as p
-            LEFT join category as c on c.id = p.idcategory`
+            LEFT join category as c on c.id = p.idcategory
+            join stock as  s on s.idproduct = p.id
+            where s.idtype = ${req.params.idtype} and s.idstatus = 1`
 
             if (Object.keys(req.query).length > 0) {
                 let searchQuery = []
@@ -25,7 +27,7 @@ module.exports = {
             LEFT JOIN product_status as ps on ps.id = s.idstatus`
 
             if (['1', '2'].indexOf(req.params.idtype) > -1) {
-                getStock = getStock + ` WHERE s.idtype = ${req.params.idtype};`
+                getStock = getStock + ` WHERE s.idtype = ${req.params.idtype} and s.idstatus = 1;`
             }
 
             getStock = await dbQuery(getStock)
@@ -50,6 +52,7 @@ module.exports = {
                 })
             })
 
+
             res.status(200).send(getProduct)
         } catch (error) {
             next(error)
@@ -71,7 +74,7 @@ module.exports = {
                     let addStock = `INSERT into stock values (null, ${addProduct.insertId}, 1, ${db.escape(stock[0].qty)}, ${db.escape(stock[0].total_netto)}, null, 1);`
                     await dbQuery(addStock)
 
-                    res.status(200).send({status: 200, messages: 'Add product berhasil!'})
+                    res.status(200).send({ status: 200, messages: 'Add product berhasil!' })
                 } catch (error) {
                     // hapus gambar yang sudah di upload
                     fs.unlinkSync(`./public/products/${req.files.products[0].filename}`)
@@ -86,5 +89,15 @@ module.exports = {
             next(error)
         }
     },
+    deleteProduct: async (req, res, next) =>{
+        try {
+            let deleteProduct  = `UPDATE stock set idstatus = 3 where id = ${db.escape(req.params.idstock)};`
+            await dbQuery(deleteProduct)
+            console.log(deleteProduct)
+            res.status(200).send({ status: 200, messages: 'Product deleted!' })
+        } catch (error) {
+            
+        }
+    }
 
 }
