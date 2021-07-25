@@ -46,6 +46,13 @@ module.exports = {
           profile_image,
           otp,
         } = getUser[0];
+        let char = "0123456789abcdefghijklmnoprstuvwxyz";
+        let OTP = "";
+
+        for (let i = 0; i < 6; i++) {
+          OTP += char.charAt(Math.floor(Math.random() * char.length));
+        }
+
         let reVerif = `UPDATE user set otp = ${db.escape(
           OTP
         )} where iduser = ${db.escape(iduser)};`;
@@ -80,7 +87,7 @@ module.exports = {
           reVerif: true,
         });
       } else {
-        res.status(404).send({
+        res.status(200).send({
           status: 404,
           messages: "Email not registered. Please register!",
           reVerif: false,
