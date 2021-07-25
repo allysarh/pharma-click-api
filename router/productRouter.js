@@ -7,5 +7,5 @@ router.post('/add', productController.addProduct)
 router.delete('/delete/:idstock', productController.deleteProduct)
 router.get("/get-products", productController.getProducts);
 router.get("/get-city", productController.getCity);
-
+router.patch('/edit', productController.editProduct)
 module.exports = router

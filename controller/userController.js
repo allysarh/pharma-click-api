@@ -24,6 +24,13 @@ module.exports = {
     },
     reVerif: async (req, res, next) => {
         try {
+            let char = "0123456789abcdefghijklmnoprstuvwxyz";
+            let OTP = "";
+
+            for (let i = 0; i < 6; i++) {
+                OTP += char.charAt(Math.floor(Math.random() * char.length));
+            }
+            
             let { email } = req.body
             let getUser = `SELECT * from user where email = ${db.escape(email)};`
             getUser = await dbQuery(getUser)

@@ -65,7 +65,7 @@ module.exports = {
                 try {
                     const { products } = req.files
                     let { product_name, brand, idcategory, description, effect, usage, dosage, indication, netto, pack_price, unit, stock } = JSON.parse(req.body.data)
-                    let addProduct = `INSERT into product values (null, ${db.escape(product_name)}, ${db.escape(brand)}, ${db.escape(idcategory)}, ${db.escape(description)}, ${db.escape(effect)}, ${db.escape(usage)}, ${db.escape(dosage)}, ${db.escape(indication)}, ${db.escape(netto)}, ${db.escape(pack_price)}, ${db.escape(unit)}, now(), now())`
+                    let addProduct = `INSERT into product values (null, ${db.escape(product_name)}, ${db.escape(brand)}, ${db.escape(idcategory)}, ${db.escape(description)}, ${db.escape(effect)}, ${db.escape(usage)}, ${db.escape(dosage)}, ${db.escape(indication)}, ${db.escape(netto)}, ${db.escape(pack_price)}, ${db.escape(unit)}, now(), now());`
                     addProduct = await dbQuery(addProduct)
 
                     let addImg = `INSERT into product_image values (null, ${addProduct.insertId}, ${db.escape(`products/${products[0].filename}`)})`
@@ -93,7 +93,7 @@ module.exports = {
         try {
             let deleteProduct = `UPDATE stock set idstatus = 3 where id = ${db.escape(req.params.idstock)};`
             await dbQuery(deleteProduct)
-            console.log(deleteProduct)
+            // console.log(deleteProduct)
             res.status(200).send({ status: 200, messages: 'Product deleted!' })
         } catch (error) {
 
@@ -103,7 +103,7 @@ module.exports = {
         try {
             // let category = req.query.category;
             // let pack_price = req.query.pack_price;
-            console.log(req.query);
+            // console.log(req.query);
 
             let getSQL,
                 dataSearch = [];
@@ -148,7 +148,7 @@ module.exports = {
             const upload = uploader('/products', 'IMG').fields([{ name: 'products' }])
             upload(req, res, async (error) => {
                 try {
-
+                    console.log("edit")
                     let { idproduct, product_name, brand, idcategory, description, effect, usage, dosage, indication, netto, pack_price, unit, stock } = JSON.parse(req.body.data)
                     let editProduct = `UPDATE product p set product_name = ${db.escape(product_name)}, brand = ${db.escape(brand)}, idcategory = ${db.escape(idcategory)}, 
                     description = ${db.escape(description)}, effect = ${db.escape(effect)}, p.usage = ${db.escape(usage)}, dosage = ${db.escape(dosage)}, indication = ${db.escape(indication)}, 
