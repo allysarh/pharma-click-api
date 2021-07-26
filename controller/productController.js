@@ -1,26 +1,32 @@
 const fs = require('fs')
 const { uploader } = require('../config')
 const { dbQuery, db } = require('../config/database')
-
+const productService = require('../service/productService')
+const Product = require('../service/productService')
 
 module.exports = {
     getProduct: async (req, res, next) => {
         try {
-
-            let getProduct = `SELECT p.id as idproduct, product_name, brand, c.name as category, description, effect, p.usage, dosage, indication, netto, pack_price, unit, created_at, updated_at from product as p
-            LEFT join category as c on c.id = p.idcategory
-            join stock as  s on s.idproduct = p.id
-            where s.idtype = ${req.params.idtype} and s.idstatus = 1`
-
+            // ganti jd query
+            // routing /products
+            let getProduct = productService.getProduct(req.params.idtype)
             if (Object.keys(req.query).length > 0) {
                 let searchQuery = []
                 for (props in req.query) {
-                    searchQuery.push(`${props} = ${db.escape(req.query[props].replace('%20', ' '))}`)
+                    if(req.query[props].includes('%')){
+                        searchQuery.push(`${props} LIKE ${db.escape(req.query[props].replace('+', ' '))}`)
+                    } else {
+                        searchQuery.push(`${props} = ${db.escape(req.query[props].replace('+', ' '))}`)
+                    }
                 }
-                getProduct = getProduct + ` AND ${searchQuery.join(" AND ")};`
 
+                console.log(searchQuery)
+                getProduct += ` AND ${searchQuery.join(" AND ")};`
+                
             }
             console.log(getProduct)
+
+        
             getProduct = await dbQuery(getProduct)
             let getStock = `SELECT s.id, idproduct, t.name as type, qty, total_netto, unit_price, ps.name as status from stock as s 
             LEFT JOIN type as t on t.id = s.idtype
