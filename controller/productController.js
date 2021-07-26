@@ -17,10 +17,10 @@ module.exports = {
                 for (props in req.query) {
                     searchQuery.push(`${props} = ${db.escape(req.query[props].replace('%20', ' '))}`)
                 }
-                getProduct = getProduct + ` WHERE ${searchQuery.join(" AND ")};`
+                getProduct = getProduct + ` AND ${searchQuery.join(" AND ")};`
 
             }
-
+            console.log(getProduct)
             getProduct = await dbQuery(getProduct)
             let getStock = `SELECT s.id, idproduct, t.name as type, qty, total_netto, unit_price, ps.name as status from stock as s 
             LEFT JOIN type as t on t.id = s.idtype
