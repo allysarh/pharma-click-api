@@ -259,8 +259,8 @@ module.exports = {
               phone_number,
             });
 
-            let getCart = `SELECT *,p.product_name,s.qty as qty_product, from cart 
-            c join product_image pi on pi.idproduct = c.idproduct 
+            let getCart = `SELECT *,p.product_name,s.qty as qty_product from cart c 
+            join product_image pi on pi.idproduct = c.idproduct 
             join product p on p.id = c.idproduct join stock s on s.idproduct = p.id where iduser = ${iduser};`;
             getCart = await dbQuery(getCart);
 

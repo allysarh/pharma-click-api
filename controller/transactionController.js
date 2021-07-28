@@ -39,27 +39,78 @@ module.exports = {
       let { iduser } = req.user;
       console.log(req.body);
       let {
-        idstatus,
+        id_transaction_status,
         idproduct,
         invoice,
         id_city_origin,
         id_city_destination,
         address,
+        recipient,
+        postal_code,
         shipping_cost,
         total_price,
         note,
         idtype,
       } = req.body;
 
-      // let udpateStock = `UPDATE stock SET ? WHERE ?`;
+      let postTransaction = `INSERT INTO transaction SET ?`;
+
+      let transaction = await dbQuery(postTransaction, {
+        iduser: iduser,
+        id_transaction_status: id_transaction_status,
+        invoice: invoice,
+        id_city_origin: id_city_origin,
+        id_city_destination: id_city_destination,
+        address: address,
+        recipient: recipient,
+        postal_code: postal_code,
+        shipping_cost: shipping_cost,
+        total_price: total_price,
+        note: note,
+        idtype: idtype,
+      });
+
+      console.log("TRANS ID", transaction.insertId);
+
+      let sql = `INSERT INTO transaction_detail SET ?`;
+
+      idproduct.map((item) => {
+        let transactions = dbQuery(sql, {
+          idproduct: item.idproduct,
+          idtransaction: transaction.insertId,
+          qty_buy: item.qty_product,
+          netto: item.netto,
+        });
+      });
+
+      // let updateStock = `UPDATE stock SET ? WHERE ?`;
       // idproduct.map((item) => {
-      //   let updateTransaction = dbQuery(sql, [
+      //   let updateTransaction = dbQuery(updateStock, [
       //     {
-      //       qty: item.qty_buy,
+      //       qty: item.qty_product,
+      //       // total_netto:  - item.total_netto * item.qty_product,
       //     },
       //     { idproduct: item.idproduct },
       //   ]);
       // });
+      idproduct.map((item) => {
+        let updateStock = dbQuery(
+          `UPDATE stock SET qty= qty-${db.escape(
+            item.qty_product
+          )},total_netto=total_netto-${db.escape(
+            item.total_netto
+          )} WHERE idproduct=${db.escape(item.idproduct)}`
+        );
+      });
+
+      //   let postTransactions = `INSERT INTO transaction (iduser,idstatus,invoice,id_city_origin,id_city_destination,shipping_cost,total_price,note,idtype)
+      // VALUES(${db.escape(iduser)},${db.escape(idstatus)},${db.escape(
+      //     invoice
+      //   )},${db.escape(id_city_origin)},${db.escape(
+      //     id_city_destination
+      //   )},${db.escape(shipping_cost)},${db.escape(total_price)},${db.escape(
+      //     note
+      //   )},${db.escape(idtype)})`;
 
       let deleteStock = `DELETE  FROM cart WHERE ? AND ?`;
       idproduct.map((item) => {
@@ -70,34 +121,6 @@ module.exports = {
           { iduser: iduser },
         ]);
       });
-
-      // let sql = `INSERT INTO transaction SET ?`;
-
-      // idproduct.map((item) => {
-      //   let transactions = dbQuery(sql, {
-      //     iduser: iduser,
-      //     idstatus: idstatus,
-      //     idproduct: item.idproduct,
-      //     invoice: invoice,
-      //     id_city_origin: id_city_origin,
-      //     id_city_destination: id_city_destination,
-      //     address: address,
-      //     shipping_cost: shipping_cost,
-      //     total_price: total_price,
-      //     note: note,
-      //     idtype: idtype,
-      //     qty_buy: item.qty_buy,
-      //   });
-      // });
-
-      //   let postTransactions = `INSERT INTO transaction (iduser,idstatus,invoice,id_city_origin,id_city_destination,shipping_cost,total_price,note,idtype)
-      // VALUES(${db.escape(iduser)},${db.escape(idstatus)},${db.escape(
-      //     invoice
-      //   )},${db.escape(id_city_origin)},${db.escape(
-      //     id_city_destination
-      //   )},${db.escape(shipping_cost)},${db.escape(total_price)},${db.escape(
-      //     note
-      //   )},${db.escape(idtype)})`;
 
       res.status(200).send({ message: "transaction success" });
     } catch (error) {
