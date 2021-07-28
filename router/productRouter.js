@@ -11,6 +11,7 @@ router.get("/get-city", productController.getCity);
 router.patch("/edit", productController.editProduct);
 router.patch("/increment", productController.incrementStock);
 router.patch("/decrement", productController.decrementStock);
-router.post("/shipping-cost", productController.shippingCost);
+// router.post("/shipping-cost", productController.shippingCost);
+router.delete("/delete", productController.deleteProductCart);
 
 module.exports = router;

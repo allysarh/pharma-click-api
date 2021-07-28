@@ -16,6 +16,7 @@ router.get("/get-address", userController.getAddress);
 router.post("/post-address", userController.postAddress);
 router.delete("/delete-address", userController.deleteAddress);
 router.patch("/patch-address", userController.patchAddress);
+router.patch("/set-default", userController.setDefault);
 
 router.patch("/patch-user", readToken, userController.patchUser);
 router.get("/get-image-user", userController.getImageUser);

@@ -259,14 +259,16 @@ module.exports = {
               phone_number,
             });
 
-            let getCart = `SELECT *,p.product_name from cart c join product_image pi on pi.idproduct = c.idproduct join product p on p.id = c.idproduct where iduser = ${iduser};`;
+            let getCart = `SELECT *,p.product_name,s.qty as qty_product, from cart 
+            c join product_image pi on pi.idproduct = c.idproduct 
+            join product p on p.id = c.idproduct join stock s on s.idproduct = p.id where iduser = ${iduser};`;
             getCart = await dbQuery(getCart);
 
             getCart.forEach((item, index) => {
               cart.push(item);
             });
 
-            let getAddress = `SELECT * from address where iduser = ${iduser};`;
+            let getAddress = `SELECT * from address a join city c on a.id_city_origin = c.id WHERE a.iduser = ${iduser};`;
             getAddress = await dbQuery(getAddress);
 
             getAddress.forEach((val, i) => {
@@ -359,7 +361,7 @@ module.exports = {
         cart.push(item);
       });
 
-      let getAddress = `SELECT a.id,a.tag,a.recipient,a.id_city_origin,a.iduser,c.name,a.address,a.postal_code from address a join city c on a.id_city_origin = c.id where iduser = ${iduser};`;
+      let getAddress = `SELECT a.id,a.tag,a.recipient,a.id_city_origin,a.iduser,c.name,a.address,a.postal_code,a.set_default from address a join city c on a.id_city_origin = c.id where iduser = ${iduser};`;
       getAddress = await dbQuery(getAddress);
 
       getAddress.forEach((val, i) => {
@@ -441,7 +443,7 @@ module.exports = {
 
       let getCart = `SELECT * from cart;`;
       getCart = await dbQuery(getCart);
-      console.log(getCart);
+      // console.log(getCart);
 
       getUser.forEach((item, index) => {
         item.address = [];
@@ -458,7 +460,7 @@ module.exports = {
         });
 
         getCart.forEach((val, id) => {
-          console.log("c", val);
+          // console.log("c", val);
           if (item.iduser == val.iduser) {
             item.cart.push(val);
           }
@@ -477,7 +479,7 @@ module.exports = {
 
       let verifyEmail = `SELECT * from user where email = ${db.escape(email)};`;
       verifyEmail = await dbQuery(verifyEmail);
-      console.log(verifyEmail);
+      // console.log(verifyEmail);
 
       if (verifyEmail.length > 0) {
         let {
@@ -619,14 +621,14 @@ module.exports = {
       }
 
       if (dataSearch.length > 0) {
-        getSQL = `SELECT a.id,a.tag,a.recipient,a.id_city_origin,a.iduser,c.name,a.address,a.postal_code FROM address a JOIN city c on a.id_city_origin = c.id WHERE ${dataSearch.join(
+        getSQL = `SELECT a.id,a.tag,a.recipient,a.id_city_origin,a.iduser,c.name,a.address,a.postal_code,a.set_default FROM address a JOIN city c on a.id_city_origin = c.id WHERE ${dataSearch.join(
           " AND "
         )}`;
       } else {
-        getSQL = `SELECT a.id,a.tag,a.recipient,a.id_city_origin,a.iduser,c.name,a.address,a.postal_code FROM address a JOIN city c on a.id_city_origin = c.id`;
+        getSQL = `SELECT a.id,a.tag,a.recipient,a.id_city_origin,a.iduser,c.name,a.address,a.postal_code,a.set_default FROM address a JOIN city c on a.id_city_origin = c.id`;
       }
       getAddress = await dbQuery(getSQL);
-      res.status(200).send(getAddress);
+      res.status(200).send(getAddress[0]);
     } catch (error) {
       next(error);
     }
@@ -761,37 +763,32 @@ module.exports = {
     // getImage = await dbQuery(`select profile_image from user`);
     // console.log("image get", getImage);
     try {
-      let getSQL,
-        dataSearch = [];
-      for (let prop in req.query) {
-        dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
-      }
-
-      if (dataSearch.length > 0) {
-        getSQL = `SELECT profile_image from user WHERE ${dataSearch.join(
-          " AND "
-        )}`;
-      } else {
-        getSQL = `SELECT profile_image from user`;
-      }
-
-      getProfileImage = await dbQuery(getSQL);
-
-      // console.log("waw", getProfileImage[0].profile_image);
-
-      if (getProfileImage[0].profile_image.length > 0) {
-        let { profile_image } = getProfileImage[0];
-
-        let mims = mime.contentType(profile_image);
-        //console.log("mimimime pri", mims);
-        const contents = await fs1.readFile(profile_image, {
-          encoding: "base64",
-        });
-        let image = `data:${mims};base64,${contents}`;
-        res.status(200).send({ image_path: profile_image, image_url: image });
-      } else {
-        res.status(200).send({ message: "image not found" });
-      }
+      // let getSQL,
+      //   dataSearch = [];
+      // for (let prop in req.query) {
+      //   dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
+      // }
+      // if (dataSearch.length > 0) {
+      //   getSQL = `SELECT profile_image from user WHERE ${dataSearch.join(
+      //     " AND "
+      //   )}`;
+      // } else {
+      //   getSQL = `SELECT profile_image from user`;
+      // }
+      // getProfileImage = await dbQuery(getSQL);
+      // // console.log("waw", getProfileImage[0].profile_image);
+      // if (getProfileImage[0].profile_image.length > 0) {
+      //   let { profile_image } = getProfileImage[0];
+      //   let mims = mime.contentType(profile_image);
+      //   //console.log("mimimime pri", mims);
+      //   const contents = await fs1.readFile(profile_image, {
+      //     encoding: "base64",
+      //   });
+      //   let image = `data:${mims};base64,${contents}`;
+      //   res.status(200).send({ image_path: profile_image, image_url: image });
+      // } else {
+      //   res.status(200).send({ message: "image not found" });
+      // }
     } catch (error) {
       next(error);
     }
@@ -799,7 +796,7 @@ module.exports = {
 
   resetPassword: async (req, res, next) => {
     try {
-      console.log(req.user);
+      // console.log(req.user);
       let { password } = req.body;
       let { iduser } = req.user;
       let hashPassword = Crypto.createHmac("sha256", "PHR$$$")
@@ -812,6 +809,32 @@ module.exports = {
       await dbQuery(resetPass);
 
       res.status(200).send({ status: 200, messages: "Reset password success" });
+    } catch (error) {
+      next(error);
+    }
+  },
+  setDefault: async (req, res, next) => {
+    try {
+      let { idaddress, iduser } = req.body;
+
+      // console.log("cek default", idaddress, iduser);
+
+      let cekDefault = await dbQuery(
+        `UPDATE address SET set_default=${db.escape(
+          2
+        )} WHERE iduser=${db.escape(iduser)} AND set_default=${db.escape(
+          1
+        )} AND id != ${db.escape(idaddress)}`
+      );
+
+      let setDefault = await dbQuery(
+        `UPDATE address SET set_default=${db.escape(1)} WHERE id=${db.escape(
+          idaddress
+        )} `
+      );
+      res
+        .status(200)
+        .send({ status: 200, messages: "Success change default address" });
     } catch (error) {
       next(error);
     }
