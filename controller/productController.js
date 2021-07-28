@@ -210,5 +210,153 @@ module.exports = {
         } catch (error) {
             next(error)
         }
+        
+    },
+    addToCart: async (req, res, next) => {
+        try {
+            let { iduser, idproduct, qty, total_netto, price, product_name } =
+                req.body;
+            console.log("isi body", req.body);
+
+            getCartSort = await dbQuery(
+                `SELECT * FROM cart WHERE iduser=${db.escape(
+                    iduser
+                )} AND idproduct=${db.escape(idproduct)}`
+            );
+
+            getStock = await dbQuery(
+                `SELECT * FROM stock WHERE idproduct=${db.escape(idproduct)} `
+            );
+
+            if (getCartSort[0] === undefined) {
+                if (getCartSort[0] === undefined) {
+                    let addCart = await dbQuery(
+                        `INSERT INTO cart VALUES (null,${db.escape(iduser)},${db.escape(
+                            idproduct
+                        )},${db.escape(qty)},${db.escape(total_netto)},${db.escape(
+                            price
+                        )},now(),now());`
+                    );
+                    res.status(200).send(`Success add to cart ${product_name}`);
+                } else {
+                    if (qty + getCartSort[0].qty <= getStock[0].qty) {
+                        let addCart = await dbQuery(
+                            `INSERT INTO cart VALUES (null,${db.escape(iduser)},${db.escape(
+                                idproduct
+                            )},${db.escape(qty)},${db.escape(total_netto)},${db.escape(
+                                price
+                            )},now(),now());`
+                        );
+                        res.status(200).send(`Success add to cart ${product_name}`);
+                    }
+                }
+            } else {
+                if (
+                    getCartSort[0].iduser === iduser &&
+                    getCartSort[0].idproduct === idproduct
+                ) {
+                    if (qty + getCartSort[0].qty <= getStock[0].qty) {
+                        let updateCart = await dbQuery(
+                            `UPDATE cart SET qty = ${db.escape(
+                                getCartSort[0].qty + qty
+                            )}, total_netto = ${db.escape(
+                                getCartSort[0].total_netto + total_netto
+                            )},price = ${db.escape(
+                                getCartSort[0].price + price
+                            )} WHERE idproduct = ${db.escape(idproduct)}`
+                        );
+                        res.status(200).send(`Success add to cart ${product_name}`);
+                    } else {
+                        res.status(200).send(`Out Of Stock ${product_name}`);
+                    }
+                }
+                // else {
+                //   let addCart = await dbQuery(
+                //     `INSERT INTO cart VALUES (null,${db.escape(iduser)},${db.escape(
+                //       idproduct
+                //     )},${db.escape(qty)},${db.escape(total_netto)},${db.escape(
+                //       price
+                //     )},now(),now());`
+                //   );
+                //   res.status(200).send(`Success add to cart ${product_name}`);
+                // }
+            }
+        } catch (error) {
+            next(error);
+        }
+    },
+    incrementStock: async (req, res, next) => {
+        try {
+            let { iduser, idproduct, qty, price } = req.body;
+
+            let stock = await dbQuery(
+                `SELECT * FROM stock s join product p on p.id = s.idproduct  WHERE idproduct =${db.escape(
+                    idproduct
+                )}`
+            );
+
+            if (qty < stock[0].qty) {
+                let addStock = await dbQuery(
+                    `UPDATE cart SET qty= ${db.escape(qty + 1)},price= ${db.escape(
+                        stock[0].pack_price * (qty + 1)
+                    )} WHERE idproduct=${db.escape(idproduct)} AND iduser=${db.escape(
+                        iduser
+                    )}`
+                );
+                res.status(200).send(`Increment success`);
+            } else {
+                res.status(200).send(`Out Of Stock Product`);
+            }
+        } catch (error) {
+            next(error);
+        }
+    },
+    decrementStock: async (req, res, next) => {
+        try {
+            let { iduser, idproduct, qty, price } = req.body;
+
+            let stock = await dbQuery(
+                `SELECT * FROM stock s join product p on p.id = s.idproduct  WHERE idproduct =${db.escape(
+                    idproduct
+                )}`
+            );
+
+            if (qty > 1) {
+                let incrementStock = await dbQuery(
+                    `UPDATE cart SET qty=${db.escape(qty - 1)},price = ${db.escape(
+                        stock[0].pack_price * (qty - 1)
+                    )} WHERE idproduct=${db.escape(idproduct)} AND iduser=${db.escape(
+                        iduser
+                    )}`
+                );
+                res.status(200).send(`Decrement success`);
+            } else {
+                res.status(200).send(`Stock can't null`);
+            }
+        } catch (error) {
+            next(error);
+        }
+    },
+    shippingCost: (req, res) => {
+        const params = {
+            origin: req.body.origin,
+            destination: req.body.destination,
+            weight: req.body.weight,
+        };
+        RajaOngkir.getJNECost(params)
+            .then(function (result) {
+                let cost = [];
+                result.rajaongkir.results.map((item) => {
+                    item.costs.map((item) => {
+                        cost.push({ cost: item.cost });
+                    });
+                });
+                res.status(200).send(cost);
+            })
+            .catch(function (error) {
+                next(error);
+            });
     }
+
+
 }

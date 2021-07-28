@@ -11,5 +11,9 @@ router.delete('/:idstock', authentication, authorization, productController.dele
 router.get("/get-products", productController.getProducts);
 router.get("/get-city", productController.getCity);
 router.patch('', authentication, authorization, productController.editProduct)
+router.patch("/increment", productController.incrementStock);
+router.patch("/decrement", productController.decrementStock);
+router.post("/shipping-cost", productController.shippingCost);
+router.post("/add-to-cart", productController.addToCart);
 
 module.exports = router
