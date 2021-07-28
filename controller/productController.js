@@ -1,4 +1,5 @@
 const fs = require('fs')
+const { productController } = require('.')
 const { uploader } = require('../config')
 const { dbQuery, db } = require('../config/database')
 const productService = require('../service/productService')
@@ -356,7 +357,14 @@ module.exports = {
             .catch(function (error) {
                 next(error);
             });
+    },
+    getReviews: async (req, res, next) =>{
+        try {
+            dataReview = await productService.getReviews(req.body.idproduct)
+            res.status(200).send(dataReview)
+        } catch (error) {
+            next(error)
+        }
     }
-
 
 }
