@@ -4,6 +4,7 @@ const {
   transporter,
   createToken,
   uploader,
+  uploaderProfile,
 } = require("../config");
 const fs = require("fs");
 const fs1 = require("fs").promises;
@@ -265,7 +266,7 @@ module.exports = {
               phone_number,
             });
 
-            let getCart = `SELECT * from cart where iduser = ${iduser};`;
+            let getCart = `SELECT *,p.product_name from cart c join product_image pi on pi.idproduct = c.idproduct join product p on p.id = c.idproduct where iduser = ${iduser};`;
             getCart = await dbQuery(getCart);
 
             getCart.forEach((item, index) => {
@@ -358,7 +359,7 @@ module.exports = {
         phone_number,
       });
 
-      let getCart = `SELECT * from cart where iduser = ${iduser};`;
+      let getCart = `SELECT *,p.product_name from cart c join product_image pi on pi.idproduct = c.idproduct join product p on p.id = c.idproduct where iduser = ${iduser};`;
       getCart = await dbQuery(getCart);
 
       getCart.forEach((item, index) => {
@@ -672,77 +673,90 @@ module.exports = {
   },
   patchUser: async (req, res, next) => {
     try {
-      const upload = uploader("/profile", "IMG").fields([{ name: "images" }]);
-      let { iduser, fullName, gender, phone_number, email, age } = req.body;
-      console.log("requuestnya body", req.body);
+      const upload = uploaderProfile(
+        "/profile",
+        `IMG#PRFL#USR${req.user.iduser}.`
+      ).fields([{ name: "images" }]);
       upload(req, res, async (error) => {
         if (error) {
           //hapus gambar jika proses upload error
-          fs.unlinkSync(`./public/profile/${req.files.images[0].filename}`);
+          // fs.unlinkSync(`./public/profile/${req.user.iduser}`);
+          await res
+            .status(200)
+            .send({ message: "format image must jpeg or jpg" });
           next(error);
-        }
-        try {
-          var json = JSON.parse(req.body.data);
-          const { images } = req.files;
-          // console.log(images);
-          console.log("req body data", images);
-          //console.log("cek file upload :", images);
-          let postProduct = `Insert into products values (null,${db.escape(
-            json.nama
-          )},${db.escape(json.brand)},
+        } else {
+          try {
+            var json = JSON.parse(req.body.data);
+            const { images } = req.files;
+            // console.log(images);
+            // console.log("req body data", images);
+            //console.log("cek file upload :", images);
+            let postProduct = `Insert into products values (null,${db.escape(
+              json.nama
+            )},${db.escape(json.brand)},
                 ${db.escape(json.deskripsi)},${db.escape(json.harga)},
                 ${db.escape(json.idstatus)});`;
-          let postImage = `Insert into user values `;
+            let postImage = `Insert into user values `;
 
-          if (images !== undefined) {
-            let image_profile = images[0].path;
-
-            patchUsers = await dbQuery(
-              `UPDATE user SET fullname=${db.escape(
-                json.fullName
-              )},gender=${db.escape(json.gender)},age=${db.escape(
-                json.age
-              )},email=${db.escape(json.email)},profile_image=${db.escape(
-                image_profile
-              )},age=${db.escape(json.age)},phone_number=${db.escape(
-                json.phoneNumber
-              )} WHERE iduser=${db.escape(json.iduser)}`
+            let getImage = await dbQuery(
+              `SELECT profile_image from user where iduser=${db.escape(
+                json.iduser
+              )}`
             );
-          } else {
-            let image_profile = "";
-            let getSQL,
-              dataSearch = [];
-            for (let prop in json) {
-              dataSearch.push(`${prop} = ${db.escape(json[prop])}`);
-            }
 
-            if (dataSearch.length > 0) {
-              getSQL = await dbQuery(
-                `UPDATE user SET ${dataSearch.join(
-                  " , "
+            if (images !== undefined) {
+              let image_profile = images[0].path;
+
+              patchUsers = await dbQuery(
+                `UPDATE user SET fullname=${db.escape(
+                  json.fullName
+                )},gender=${db.escape(json.gender)},age=${db.escape(
+                  json.age
+                )},email=${db.escape(json.email)},profile_image=${db.escape(
+                  image_profile
+                )},age=${db.escape(json.age)},phone_number=${db.escape(
+                  json.phoneNumber
                 )} WHERE iduser=${db.escape(json.iduser)}`
               );
-            }
+            } else {
+              let image_profile = "";
+              let getSQL,
+                dataSearch = [];
+              for (let prop in json) {
+                dataSearch.push(`${prop} = ${db.escape(json[prop])}`);
+              }
 
-            // patchUsers = await dbQuery(
-            //   `UPDATE user SET fullname=${db.escape(
-            //     json.fullName
-            //   )},gender=${db.escape(json.gender)},age=${db.escape(
-            //     json.age
-            //   )},email=${db.escape(json.email)},profile_image=${db.escape(
-            //     profile_image
-            //   )},age=${db.escape(json.age)},phone_number=${db.escape(
-            //     json.phoneNumber
-            //   )} WHERE iduser=${db.escape(json.iduser)}`
-            // );
+              if (dataSearch.length > 0) {
+                getSQL = await dbQuery(
+                  `UPDATE user SET ${dataSearch.join(
+                    " , "
+                  )} WHERE iduser=${db.escape(json.iduser)}`
+                );
+              }
+
+              let { profile_image } = getImage[0];
+
+              // patchUsers = await dbQuery(
+              //   `UPDATE user SET fullname=${db.escape(
+              //     json.fullName
+              //   )},gender=${db.escape(json.gender)},age=${db.escape(
+              //     json.age
+              //   )},email=${db.escape(json.email)},profile_image=${db.escape(
+              //     profile_image
+              //   )},age=${db.escape(json.age)},phone_number=${db.escape(
+              //     json.phoneNumber
+              //   )} WHERE iduser=${db.escape(json.iduser)}`
+              // );
+            }
+          } catch (error) {
+            // if (req.files.images) {
+            //   await fs1.unlinkSync(
+            //     `./public/profile/${req.files.images[0].filename}`
+            //   );
+            // }
+            next(error);
           }
-        } catch (error) {
-          if (req.files.images) {
-            await fs1.unlinkSync(
-              `./public/profile/${req.files.images[0].filename}`
-            );
-          }
-          next(error);
         }
       });
       res.status(200).send({ message: "Success input profile" });
