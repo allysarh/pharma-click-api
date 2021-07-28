@@ -786,7 +786,7 @@ module.exports = {
 
       // console.log("waw", getProfileImage[0].profile_image);
 
-      if (getProfileImage[0].profile_image.length > 0) {
+      if (getProfileImage[0].profile_image) {
         let { profile_image } = getProfileImage[0];
 
         let mims = mime.contentType(profile_image);
