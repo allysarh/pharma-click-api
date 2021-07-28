@@ -18,5 +18,5 @@ router.delete("/delete-address", userController.deleteAddress);
 router.patch("/patch-address", userController.patchAddress);
 
 router.patch("/patch-user", userController.patchUser);
-router.get("/get-image-user", userController.getImageUser);
+// router.get("/get-image-user", userController.getImageUser);
 module.exports = router;
