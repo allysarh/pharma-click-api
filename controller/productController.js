@@ -1,23 +1,43 @@
-const fs = require("fs");
-const { uploader } = require("../config");
-const { dbQuery, db } = require("../config/database");
+const fs = require('fs')
+const { uploader } = require('../config')
+const { dbQuery, db } = require('../config/database')
+const productService = require('../service/productService')
+const Product = require('../service/productService')
 
 module.exports = {
   getProduct: async (req, res, next) => {
     try {
-      let getProduct = `SELECT p.id as idproduct, product_name, brand, c.name as category, description, effect, p.usage, dosage, indication, netto, pack_price, unit, created_at, updated_at from product as p
-            LEFT join category as c on c.id = p.idcategory
-            join stock as  s on s.idproduct = p.id
-            where s.idtype = ${req.params.idtype} and s.idstatus = 1`;
+
+      let getProduct = productService.getProduct(req.params.idtype)
 
       if (Object.keys(req.query).length > 0) {
-        let searchQuery = [];
+        let searchQuery = []
+        let sortQuery = []
+        let filterQuery = []
+
         for (props in req.query) {
-          searchQuery.push(
-            `${props} = ${db.escape(req.query[props].replace("%20", " "))}`
-          );
+          if (props.toLowerCase() == "sort") {
+            sortQuery.push(`${req.query[props].split(':').join(' ')}`)
+          }
+          else if (req.query[props].includes('%')) {
+            searchQuery.push(`${props} LIKE ${db.escape(req.query[props].replace('+', ' '))}`)
+            getProduct += ` AND ${searchQuery.join(" AND ")}`
+          }
+
+          else if (req.query[props].includes('[and]')) {
+            let range = req.query[props].split('[and]')
+            filterQuery.push(` and ${props} >= ${range[0]} and ${props} <= ${range[1]}`)
+            getProduct += filterQuery
+          } else {
+            searchQuery.push(`${props} = ${db.escape(req.query[props].replace('+', ' '))}`)
+            getProduct += ` AND ${searchQuery.join(" AND ")}`
+          }
+
         }
-        getProduct = getProduct + ` WHERE ${searchQuery.join(" AND ")};`;
+        if (sortQuery.length > 0) {
+          getProduct += ` ORDER BY ${sortQuery}`
+        }
+
       }
 
       getProduct = await dbQuery(getProduct);
@@ -91,16 +111,14 @@ module.exports = {
           )}, ${db.escape(unit)}, now(), now());`;
           addProduct = await dbQuery(addProduct);
 
-          let addImg = `INSERT into product_image values (null, ${
-            addProduct.insertId
-          }, ${db.escape(`products/${products[0].filename}`)})`;
+          let addImg = `INSERT into product_image values (null, ${addProduct.insertId
+            }, ${db.escape(`products/${products[0].filename}`)})`;
           await dbQuery(addImg);
 
-          let addStock = `INSERT into stock values (null, ${
-            addProduct.insertId
-          }, 1, ${db.escape(stock[0].qty)}, ${db.escape(
-            stock[0].total_netto
-          )}, null, 1);`;
+          let addStock = `INSERT into stock values (null, ${addProduct.insertId
+            }, 1, ${db.escape(stock[0].qty)}, ${db.escape(
+              stock[0].total_netto
+            )}, null, 1);`;
           await dbQuery(addStock);
 
           res
@@ -126,7 +144,7 @@ module.exports = {
       await dbQuery(deleteProduct);
       // console.log(deleteProduct)
       res.status(200).send({ status: 200, messages: "Product deleted!" });
-    } catch (error) {}
+    } catch (error) { }
   },
   getProducts: async (req, res, next) => {
     try {
@@ -201,8 +219,8 @@ module.exports = {
             idcategory
           )}, 
                     description = ${db.escape(
-                      description
-                    )}, effect = ${db.escape(effect)}, p.usage = ${db.escape(
+            description
+          )}, effect = ${db.escape(effect)}, p.usage = ${db.escape(
             usage
           )}, dosage = ${db.escape(dosage)}, indication = ${db.escape(
             indication
