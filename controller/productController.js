@@ -257,27 +257,4 @@ module.exports = {
       next(error);
     }
   },
-  getHistoryTransaction: async (req, res, next) => {
-    try {
-      let historyTrans,
-        dataSearch = [];
-      for (let prop in req.query) {
-        dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
-      }
-
-      if (dataSearch.length > 0) {
-        let { idtype } = req.params;
-        historyTrans = `SELECT * FROM transaction where ${dataSearch.join(
-          " AND "
-        )}`;
-      } else {
-        historyTrans = `SELECT * FROM transaction`;
-      }
-
-      history = await dbQuery(historyTrans);
-      res.status(200).send(history[0]);
-    } catch (err) {
-      next(error);
-    }
-  },
 };

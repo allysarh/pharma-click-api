@@ -802,4 +802,58 @@ module.exports = {
       next(error);
     }
   },
+  getHistoryTransaction: async (req, res, next) => {
+    try {
+      let historyTrans,
+        dataSearch = [];
+      for (let prop in req.query) {
+        dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
+      }
+
+      if (dataSearch.length > 0) {
+        let { idtype } = req.params;
+        historyTrans = `SELECT t.id,t.invoice,c.name as origin, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note FROM transaction t 
+        join user u on u.iduser=t.iduser 
+        join transaction_status ts on t.id_transaction_status=ts.id 
+        join city c on t.id_city_origin = c.id 
+        join city ct on ct.id = t.id_city_destination where ${dataSearch.join(
+          " AND "
+        )}`;
+      } else {
+        historyTrans = `SELECT * FROM transaction`;
+      }
+
+      history = await dbQuery(historyTrans);
+      res.status(200).send(history);
+    } catch (err) {
+      next(error);
+    }
+  },
+  getTransactionDetail: async (req, res, next) => {
+    try {
+      // console.log("idtransaction", req.params.idtransaction);
+      let transactionDetail,
+        dataSearch = [];
+      for (let prop in req.query) {
+        dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
+      }
+
+      if (dataSearch.length > 0) {
+        let { idtransaction } = req.params;
+        transactionDetail = `select * from transaction_detail td join transaction t on td.idtransaction = t.id join product p on p.id = td.idproduct join product_image pi on pi.idproduct = td.idproduct where ${dataSearch.join(
+          " AND "
+        )}`;
+      } else {
+        transactionDetail = `select * from transaction_detail td join transaction t on td.idtransaction = t.id join product p on p.id = td.idproduct join product_image pi on pi.idproduct = td.idproduct`;
+      }
+      history = await dbQuery(transactionDetail);
+
+      transactions = [];
+      // console.log(transactions);
+
+      res.status(200).send(history);
+    } catch (err) {
+      next(error);
+    }
+  },
 };

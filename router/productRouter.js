@@ -8,5 +8,5 @@ router.delete("/delete/:idstock", productController.deleteProduct);
 router.get("/get-products", productController.getProducts);
 router.get("/get-city", productController.getCity);
 router.patch("/edit", productController.editProduct);
-router.get("/sort", productController.getHistoryTransaction);
+
 module.exports = router;
