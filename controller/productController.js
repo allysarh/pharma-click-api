@@ -7,26 +7,39 @@ const Product = require('../service/productService')
 module.exports = {
     getProduct: async (req, res, next) => {
         try {
-            // ganti jd query
-            // routing /products
+
             let getProduct = productService.getProduct(req.params.idtype)
+            
             if (Object.keys(req.query).length > 0) {
                 let searchQuery = []
+                let sortQuery = []
+                let filterQuery = []
+
                 for (props in req.query) {
-                    if(req.query[props].includes('%')){
+                    if (props.toLowerCase() == "sort") {
+                        sortQuery.push(`${req.query[props].split(':').join(' ')}`)
+                    }
+                    else if (req.query[props].includes('%')) {
                         searchQuery.push(`${props} LIKE ${db.escape(req.query[props].replace('+', ' '))}`)
+                        getProduct += ` AND ${searchQuery.join(" AND ")}`
+                    }
+
+                    else if (req.query[props].includes('[and]')) {
+                        let range = req.query[props].split('[and]')
+                        filterQuery.push(` and ${props} >= ${range[0]} and ${props} <= ${range[1]}`)
+                        getProduct += filterQuery
                     } else {
                         searchQuery.push(`${props} = ${db.escape(req.query[props].replace('+', ' '))}`)
+                        getProduct += ` AND ${searchQuery.join(" AND ")}`
                     }
+
+                }
+                if (sortQuery.length > 0) {
+                    getProduct += ` ORDER BY ${sortQuery}`
                 }
 
-                console.log(searchQuery)
-                getProduct += ` AND ${searchQuery.join(" AND ")};`
-                
             }
-            console.log(getProduct)
 
-        
             getProduct = await dbQuery(getProduct)
             let getStock = `SELECT s.id, idproduct, t.name as type, qty, total_netto, unit_price, ps.name as status from stock as s 
             LEFT JOIN type as t on t.id = s.idtype
@@ -60,6 +73,7 @@ module.exports = {
 
 
             res.status(200).send(getProduct)
+            // res.status(200).send("")
         } catch (error) {
             next(error)
         }

@@ -1,14 +1,15 @@
 const express = require('express')
+const { readToken } = require('../config')
 const { productController } = require('../controller')
-const authentication = require('./auth/authentication')
-const authorization = require('./auth/authorization')
+const { authentication, authorization } = require('./auth')
+
 const router = express.Router()
 
 router.get('/:idtype', productController.getProduct)
-router.post('', productController.addProduct)
-router.delete('/:idstock', productController.deleteProduct)
+router.post('', authentication, authorization, productController.addProduct)
+router.delete('/:idstock', authentication, authorization, productController.deleteProduct)
 router.get("/get-products", productController.getProducts);
 router.get("/get-city", productController.getCity);
-router.patch('/edit', productController.editProduct)
+router.patch('', authentication, authorization, productController.editProduct)
 
 module.exports = router
