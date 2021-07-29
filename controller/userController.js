@@ -831,15 +831,14 @@ module.exports = {
   },
   getTransactionDetail: async (req, res, next) => {
     try {
-      // console.log("idtransaction", req.params.idtransaction);
+      console.log("idtransaction", req.query);
       let transactionDetail,
         dataSearch = [];
-      for (let prop in req.query) {
-        dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
+      for (let prop in req.params) {
+        dataSearch.push(`${prop} = ${db.escape(req.params[prop])}`);
       }
 
       if (dataSearch.length > 0) {
-        let { idtransaction } = req.params;
         transactionDetail = `select * from transaction_detail td join transaction t on td.idtransaction = t.id join product p on p.id = td.idproduct join product_image pi on pi.idproduct = td.idproduct where ${dataSearch.join(
           " AND "
         )}`;
