@@ -1,0 +1,9 @@
+HOSTNAME = 139.162.63.45
+USER = root
+PASSSQL= 
+DB= db_pharmaclick
+PORTSQL = 3306
+PORT=2010
+userNodemailer=mrakhalf@apeloe.com
+pass2FA=pllcjuwpqemyllme
+JWTSECRET='ikea$'

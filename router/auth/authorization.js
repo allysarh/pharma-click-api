@@ -11,7 +11,7 @@ module.exports = {
             if(req.user.role == "admin"){
                 next()
             } else {
-                return res.status(401).send("USer not verified")
+                return res.status(401).send("User not verified")
             }
         })
     }

@@ -1,25 +1,50 @@
-const fs = require("fs");
-const { uploader } = require("../config");
-const { dbQuery, db } = require("../config/database");
+const fs = require('fs')
+const { productController } = require('.')
+const { uploader } = require('../config')
+const { dbQuery, db } = require('../config/database')
+const productService = require('../service/productService')
+const Product = require('../service/productService')
+var RajaOngkir = require("rajaongkir-nodejs").Starter(
+    "63b5cc834bb0e38090a2b629da2ca394"
+);
 
 module.exports = {
     getProduct: async (req, res, next) => {
         try {
-            let getProduct = `SELECT p.id as idproduct, product_name, brand, c.name as category, description, effect, p.usage, dosage, indication, netto, pack_price, unit, created_at, updated_at from product as p
-            LEFT join category as c on c.id = p.idcategory
-            join stock as  s on s.idproduct = p.id
-            where s.idtype = ${req.params.idtype} and s.idstatus = 1`;
+
+            let getProduct = productService.getProduct(req.params.idtype)
 
             if (Object.keys(req.query).length > 0) {
                 let searchQuery = []
+                let sortQuery = []
+                let filterQuery = []
+
                 for (props in req.query) {
-                    searchQuery.push(`${props} = ${db.escape(req.query[props].replace('%20', ' '))}`)
+                    if (props.toLowerCase() == "sort") {
+                        sortQuery.push(`${req.query[props].split(':').join(' ')}`)
+                    }
+                    else if (req.query[props].includes('%')) {
+                        searchQuery.push(`${props} LIKE ${db.escape(req.query[props].replace('+', ' '))}`)
+                        getProduct += ` AND ${searchQuery.join(" AND ")}`
+                    }
+
+                    else if (req.query[props].includes('[and]')) {
+                        let range = req.query[props].split('[and]')
+                        filterQuery.push(` and ${props} >= ${range[0]} and ${props} <= ${range[1]}`)
+                        getProduct += filterQuery
+                    } else {
+                        searchQuery.push(`${props} = ${db.escape(req.query[props].replace('+', ' '))}`)
+                        getProduct += ` AND ${searchQuery.join(" AND ")}`
+                    }
+
                 }
-                getProduct = getProduct + ` AND ${searchQuery.join(" AND ")};`
+                if (sortQuery.length > 0) {
+                    getProduct += ` ORDER BY ${sortQuery}`
+                }
 
             }
-            console.log(getProduct)
-            getProduct = await dbQuery(getProduct)
+
+            getProduct = await dbQuery(getProduct);
             let getStock = `SELECT s.id, idproduct, t.name as type, qty, total_netto, unit_price, ps.name as status from stock as s 
             LEFT JOIN type as t on t.id = s.idtype
             LEFT JOIN product_status as ps on ps.id = s.idstatus`;
@@ -59,26 +84,14 @@ module.exports = {
     },
     addProduct: async (req, res, next) => {
         try {
-            const upload = uploader("/products", "IMG").fields([
-                { name: "products" },
-            ]);
+
+            const upload = uploader("/products", "IMG").fields([{ name: "products" }]);
+
             upload(req, res, async (error) => {
                 try {
                     const { products } = req.files;
-                    let {
-                        product_name,
-                        brand,
-                        idcategory,
-                        description,
-                        effect,
-                        usage,
-                        dosage,
-                        indication,
-                        netto,
-                        pack_price,
-                        unit,
-                        stock,
-                    } = JSON.parse(req.body.data);
+                    let { product_name, brand, idcategory, description, effect, usage, dosage, indication, netto, pack_price, unit,
+                        stock, } = JSON.parse(req.body.data);
                     let addProduct = `INSERT into product values (null, ${db.escape(
                         product_name
                     )}, ${db.escape(brand)}, ${db.escape(idcategory)}, ${db.escape(
@@ -103,6 +116,7 @@ module.exports = {
                     res
                         .status(200)
                         .send({ status: 200, messages: "Add product berhasil!" });
+
                 } catch (error) {
                     // hapus gambar yang sudah di upload
                     fs.unlinkSync(`./public/products/${req.files.products[0].filename}`);
@@ -110,9 +124,10 @@ module.exports = {
                     console.log("error catch", error);
                     res.status(200).send("ERROR");
                 }
-            });
-        } catch (error) {
-            next(error);
+            })
+        }
+        catch (error) {
+            next(error)
         }
     },
     deleteProduct: async (req, res, next) => {
@@ -256,47 +271,19 @@ module.exports = {
     },
     addToCart: async (req, res, next) => {
         try {
-            let { iduser, idproduct, qty, total_netto, price, product_name } =
-                req.body;
-            console.log("isi body", req.body);
-
-            getCartSort = await dbQuery(
-                `SELECT * FROM cart WHERE iduser=${db.escape(
-                    iduser
-                )} AND idproduct=${db.escape(idproduct)}`
-            );
-
-            getStock = await dbQuery(
-                `SELECT * FROM stock WHERE idproduct=${db.escape(idproduct)} `
-            );
+            let { iduser, idproduct, qty, total_netto, price, product_name } = req.body;
 
             if (getCartSort[0] === undefined) {
-                if (getCartSort[0] === undefined) {
-                    let addCart = await dbQuery(
-                        `INSERT INTO cart VALUES (null,${db.escape(iduser)},${db.escape(
-                            idproduct
-                        )},${db.escape(qty)},${db.escape(total_netto)},${db.escape(
-                            price
-                        )},now(),now());`
-                    );
-                    res.status(200).send(`Success add to cart ${product_name}`);
-                } else {
-                    if (qty + getCartSort[0].qty <= getStock[0].qty) {
-                        let addCart = await dbQuery(
-                            `INSERT INTO cart VALUES (null,${db.escape(iduser)},${db.escape(
-                                idproduct
-                            )},${db.escape(qty)},${db.escape(total_netto)},${db.escape(
-                                price
-                            )},now(),now());`
-                        );
-                        res.status(200).send(`Success add to cart ${product_name}`);
-                    }
-                }
+                let addCart = await dbQuery(
+                    `INSERT INTO cart VALUES (null,${db.escape(iduser)},${db.escape(
+                        idproduct
+                    )},${db.escape(qty)},${db.escape(total_netto)},${db.escape(
+                        price
+                    )},now(),now());`
+                );
+                res.status(200).send(`Success add to cart ${product_name}`);
             } else {
-                if (
-                    getCartSort[0].iduser === iduser &&
-                    getCartSort[0].idproduct === idproduct
-                ) {
+                if (getCartSort[0].iduser === iduser && getCartSort[0].idproduct === idproduct) {
                     if (qty + getCartSort[0].qty <= getStock[0].qty) {
                         let updateCart = await dbQuery(
                             `UPDATE cart SET qty = ${db.escape(
@@ -307,9 +294,45 @@ module.exports = {
                                 getCartSort[0].price + price
                             )} WHERE idproduct = ${db.escape(idproduct)}`
                         );
-                        res.status(200).send(`Success add to cart ${product_name}`);
-                    } else {
-                        res.status(200).send(`Out Of Stock ${product_name}`);
+
+                        if (getCartSort[0] === undefined) {
+                            if (getCartSort[0] === undefined) {
+                                let addCart = await dbQuery(
+                                    `INSERT INTO cart VALUES (null,${db.escape(iduser)},${db.escape(
+                                        idproduct
+                                    )},${db.escape(qty)},${db.escape(total_netto)},${db.escape(
+                                        price
+                                    )},now(),now());`
+                                );
+                                res.status(200).send(`Success add to cart ${product_name}`);
+                            } else {
+                                if (qty + getCartSort[0].qty <= getStock[0].qty) {
+                                    let addCart = await dbQuery(
+                                        `INSERT INTO cart VALUES (null,${db.escape(iduser)},${db.escape(
+                                            idproduct
+                                        )},${db.escape(qty)},${db.escape(total_netto)},${db.escape(
+                                            price
+                                        )},now(),now());`
+                                    );
+                                    res.status(200).send(`Success add to cart ${product_name}`);
+                                }
+                            }
+                        }
+                    }
+
+                } else {
+                    if (getCartSort[0].iduser === iduser && getCartSort[0].idproduct === idproduct) {
+                        if (qty + getCartSort[0].qty <= getStock[0].qty) {
+                            let updateCart = await dbQuery(
+                                `UPDATE cart SET qty = ${db.escape(
+                                    getCartSort[0].qty + qty
+                                )}, total_netto = ${db.escape(
+                                    getCartSort[0].total_netto + total_netto
+                                )},price = ${db.escape(getCartSort[0].price + price)} WHERE idproduct = ${db.escape(idproduct)}`);
+                            res.status(200).send(`Success add to cart ${product_name}`);
+                        } else {
+                            res.status(200).send(`Out Of Stock ${product_name}`);
+                        }
                     }
                 }
                 // else {
@@ -347,7 +370,7 @@ module.exports = {
                 );
                 res.status(200).send(`Increment success`);
             } else {
-                res.status(200).send(`Out Of Stock Product`);
+                res.status(200).send({ message: `Out Of Stock Product` });
             }
         } catch (error) {
             next(error);
@@ -373,30 +396,34 @@ module.exports = {
                 );
                 res.status(200).send(`Decrement success`);
             } else {
-                res.status(200).send(`Stock can't null`);
+                res.status(200).send({ message: `quantity can't null` });
             }
         } catch (error) {
             next(error);
         }
     },
-    shippingCost: (req, res) => {
-        const params = {
-            origin: req.body.origin,
-            destination: req.body.destination,
-            weight: req.body.weight,
-        };
-        RajaOngkir.getJNECost(params)
-            .then(function (result) {
-                let cost = [];
-                result.rajaongkir.results.map((item) => {
-                    item.costs.map((item) => {
-                        cost.push({ cost: item.cost });
-                    });
-                });
-                res.status(200).send(cost);
-            })
-            .catch(function (error) {
-                next(error);
-            });
+    deleteProductCart: async (req, res, next) => {
+        try {
+            let { idproduct, iduser } = req.query;
+
+            console.log(idproduct);
+            console.log(iduser);
+            let deleteCart = await dbQuery(
+                `DELETE FROM cart WHERE idproduct =${db.escape(
+                    idproduct
+                )} AND iduser =${db.escape(iduser)}`
+            );
+            res.status(200).send({ message: `Delete product from cart success` });
+        } catch (error) {
+            next(error);
+        }
     },
+    getReviews: async (req, res, next) => {
+        try {
+            dataReview = await productService.getReviews(req.body.idproduct)
+            res.status(200).send(dataReview)
+        } catch (error) {
+            next(error)
+        }
+    }
 };
