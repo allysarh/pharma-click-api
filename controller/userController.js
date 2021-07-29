@@ -831,15 +831,13 @@ module.exports = {
   },
   getTransactionDetail: async (req, res, next) => {
     try {
-      // console.log("idtransaction", req.params.idtransaction);
       let transactionDetail,
         dataSearch = [];
-      for (let prop in req.query) {
-        dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
+      for (let prop in req.params) {
+        dataSearch.push(`${prop} = ${db.escape(req.params[prop])}`);
       }
 
       if (dataSearch.length > 0) {
-        let { idtransaction } = req.params;
         transactionDetail = `select * from transaction_detail td join transaction t on td.idtransaction = t.id join product p on p.id = td.idproduct join product_image pi on pi.idproduct = td.idproduct where ${dataSearch.join(
           " AND "
         )}`;
@@ -853,6 +851,57 @@ module.exports = {
 
       res.status(200).send(history);
     } catch (err) {
+      next(error);
+    }
+  },
+  uploadTransaction: async (req, res, next) => {
+    try {
+      let { iduser } = req.user;
+      let { idtransaction, id_transaction_status } = req.body;
+      const upload = uploader("/transactions", "IMG").fields([
+        { name: "images" },
+      ]);
+      // console.log("requuestnya body", req.body);
+      upload(req, res, async (error) => {
+        if (error) {
+          //hapus gambar jika proses upload error
+          fs.unlinkSync(
+            `./public/transactions/${req.files.images[0].filename}`
+          );
+          next(error);
+        }
+        try {
+          var json = JSON.parse(req.body.data);
+          const { images } = req.files;
+          // console.log(images);
+          console.log("req body data", req.body);
+          //console.log("cek file upload :", images);
+
+          if (images !== undefined) {
+            let image_profile = images[0].path;
+            let uploadTransaction =
+              await dbQuery(`Insert into confirmation_payment values (null,${db.escape(
+                json.idtransaction
+              )},${db.escape(json.id_transaction_status)},
+                ${db.escape(image_profile)},now(),now())`);
+
+            let updateStatusTransaction = await dbQuery(
+              `UPDATE transaction SET id_transaction_status = ${db.escape(
+                json.id_transaction_status
+              )} WHERE id = ${db.escape(json.idtransaction)} `
+            );
+          }
+        } catch (error) {
+          if (req.files.images) {
+            await fs.unlinkSync(
+              `./public/transactions/${req.files.images[0].filename}`
+            );
+          }
+          next(error);
+        }
+      });
+      res.status(200).send({ message: "Success Upload Transaction Proof" });
+    } catch (error) {
       next(error);
     }
   },
