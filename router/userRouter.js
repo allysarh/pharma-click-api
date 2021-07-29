@@ -5,7 +5,7 @@ const { userController } = require("../controller");
 
 router.post("/verif", readToken, userController.accVerif);
 router.post("/re-verif", userController.reVerif);
-router.post("/register", userController.resgister);
+router.post("/register", userController.register);
 router.post("/login", userController.login);
 router.get("/keep", readToken, userController.keepLogin);
 router.get("/get", userController.getUser);
@@ -24,4 +24,5 @@ router.get(
 
 router.patch("/patch-user", userController.patchUser);
 // router.get("/get-image-user", userController.getImageUser);
+
 module.exports = router;
