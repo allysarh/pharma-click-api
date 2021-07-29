@@ -16,7 +16,12 @@ router.get("/get-address", userController.getAddress);
 router.post("/post-address", userController.postAddress);
 router.delete("/delete-address", userController.deleteAddress);
 router.patch("/patch-address", userController.patchAddress);
+router.get("/sort-transactions", userController.getHistoryTransaction);
+router.get(
+  "/detail-transactions/:idtransaction",
+  userController.getTransactionDetail
+);
 
-router.patch("/patch-user", readToken, userController.patchUser);
-router.get("/get-image-user", userController.getImageUser);
+router.patch("/patch-user", userController.patchUser);
+// router.get("/get-image-user", userController.getImageUser);
 module.exports = router;

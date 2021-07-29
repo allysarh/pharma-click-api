@@ -677,6 +677,9 @@ module.exports = {
         "/profile",
         `IMG#PRFL#USR${req.user.iduser}.`
       ).fields([{ name: "images" }]);
+      // const upload = uploader("/profile", "IMG").fields([{ name: "images" }]);
+      // let { iduser, fullName, gender, phone_number, email, age } = req.body;
+      // console.log("requuestnya body", req.body);
       upload(req, res, async (error) => {
         if (error) {
           //hapus gambar jika proses upload error
@@ -764,24 +767,87 @@ module.exports = {
       next(error);
     }
   },
-  getImageUser: async (req, res, next) => {
-    // getImage = await dbQuery(`select profile_image from user`);
-    // console.log("image get", getImage);
+  // getImageUser: async (req, res, next) => {
+  //   // getImage = await dbQuery(`select profile_image from user`);
+  //   // console.log("image get", getImage);
+  //   try {
+  //     let getSQL,
+  //       dataSearch = [];
+  //     for (let prop in req.query) {
+  //       dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
+  //     }
+
+  //     if (dataSearch.length > 0) {
+  //       getSQL = `SELECT profile_image from user WHERE ${dataSearch.join(
+  //         " AND "
+  //       )}`;
+  //     } else {
+  //       getSQL = `SELECT profile_image from user`;
+  //     }
+
+  //     getProfileImage = await dbQuery(getSQL);
+
+  //     // console.log("waw", getProfileImage[0].profile_image);
+
+  //     if (getProfileImage[0].profile_image.length > 0) {
+  //       let { profile_image } = getProfileImage[0];
+
+  //       let mims = mime.contentType(profile_image);
+  //       //console.log("mimimime pri", mims);
+  //       const contents = await fs1.readFile(profile_image, {
+  //         encoding: "base64",
+  //       });
+  //       let image = `data:${mims};base64,${contents}`;
+  //       res.status(200).send({ image_path: profile_image, image_url: image });
+  //     } else {
+  //       res.status(200).send({ message: "image not found" });
+  //     }
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // },
+
+  resetPassword: async (req, res, next) => {
     try {
-      let getSQL,
+      console.log(req.user);
+      let { password } = req.body;
+      let { iduser } = req.user;
+      let hashPassword = Crypto.createHmac("sha256", "PHR$$$")
+        .update(password)
+        .digest("hex");
+
+      let resetPass = `UPDATE user set password = ${db.escape(
+        hashPassword
+      )} WHERE iduser = ${db.escape(iduser)};`;
+      await dbQuery(resetPass);
+
+      res.status(200).send({ status: 200, messages: "Reset password success" });
+    } catch (error) {
+      next(error);
+    }
+  },
+  getHistoryTransaction: async (req, res, next) => {
+    try {
+      let historyTrans,
         dataSearch = [];
       for (let prop in req.query) {
         dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
       }
 
       if (dataSearch.length > 0) {
-        getSQL = `SELECT profile_image from user WHERE ${dataSearch.join(
+        let { idtype } = req.params;
+        historyTrans = `SELECT t.id,t.invoice,c.name as origin, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note FROM transaction t 
+        join user u on u.iduser=t.iduser 
+        join transaction_status ts on t.id_transaction_status=ts.id 
+        join city c on t.id_city_origin = c.id 
+        join city ct on ct.id = t.id_city_destination where ${dataSearch.join(
           " AND "
         )}`;
       } else {
-        getSQL = `SELECT profile_image from user`;
+        historyTrans = `SELECT * FROM transaction`;
       }
 
+<<<<<<< HEAD
       getProfileImage = await dbQuery(getSQL);
 
       // console.log("waw", getProfileImage[0].profile_image);
@@ -800,26 +866,38 @@ module.exports = {
         res.status(200).send({ message: "image not found" });
       }
     } catch (error) {
+=======
+      history = await dbQuery(historyTrans);
+      res.status(200).send(history);
+    } catch (err) {
+>>>>>>> upstream/develop
       next(error);
     }
   },
-
-  resetPassword: async (req, res, next) => {
+  getTransactionDetail: async (req, res, next) => {
     try {
-      console.log(req.user);
-      let { password } = req.body;
-      let { iduser } = req.user;
-      let hashPassword = Crypto.createHmac("sha256", "PHR$$$")
-        .update(password)
-        .digest("hex");
+      // console.log("idtransaction", req.params.idtransaction);
+      let transactionDetail,
+        dataSearch = [];
+      for (let prop in req.query) {
+        dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
+      }
 
-      let resetPass = `UPDATE user set password = ${db.escape(
-        hashPassword
-      )} WHERE iduser = ${db.escape(iduser)};`;
-      await dbQuery(resetPass);
+      if (dataSearch.length > 0) {
+        let { idtransaction } = req.params;
+        transactionDetail = `select * from transaction_detail td join transaction t on td.idtransaction = t.id join product p on p.id = td.idproduct join product_image pi on pi.idproduct = td.idproduct where ${dataSearch.join(
+          " AND "
+        )}`;
+      } else {
+        transactionDetail = `select * from transaction_detail td join transaction t on td.idtransaction = t.id join product p on p.id = td.idproduct join product_image pi on pi.idproduct = td.idproduct`;
+      }
+      history = await dbQuery(transactionDetail);
 
-      res.status(200).send({ status: 200, messages: "Reset password success" });
-    } catch (error) {
+      transactions = [];
+      // console.log(transactions);
+
+      res.status(200).send(history);
+    } catch (err) {
       next(error);
     }
   },
