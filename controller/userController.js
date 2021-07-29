@@ -673,6 +673,7 @@ module.exports = {
   },
   patchUser: async (req, res, next) => {
     try {
+      console.log("req user", req.user);
       const upload = uploaderProfile(
         "/profile",
         `IMG#PRFL#USR${req.user.iduser}.`
@@ -767,45 +768,45 @@ module.exports = {
       next(error);
     }
   },
-  // getImageUser: async (req, res, next) => {
-  //   // getImage = await dbQuery(`select profile_image from user`);
-  //   // console.log("image get", getImage);
-  //   try {
-  //     let getSQL,
-  //       dataSearch = [];
-  //     for (let prop in req.query) {
-  //       dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
-  //     }
+  getImageUser: async (req, res, next) => {
+    // getImage = await dbQuery(`select profile_image from user`);
+    // console.log("image get", getImage);
+    try {
+      let getSQL,
+        dataSearch = [];
+      for (let prop in req.query) {
+        dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
+      }
 
-  //     if (dataSearch.length > 0) {
-  //       getSQL = `SELECT profile_image from user WHERE ${dataSearch.join(
-  //         " AND "
-  //       )}`;
-  //     } else {
-  //       getSQL = `SELECT profile_image from user`;
-  //     }
+      if (dataSearch.length > 0) {
+        getSQL = `SELECT profile_image from user WHERE ${dataSearch.join(
+          " AND "
+        )}`;
+      } else {
+        getSQL = `SELECT profile_image from user`;
+      }
 
-  //     getProfileImage = await dbQuery(getSQL);
+      getProfileImage = await dbQuery(getSQL);
 
-  //     // console.log("waw", getProfileImage[0].profile_image);
+      // console.log("waw", getProfileImage[0].profile_image);
 
-  //     if (getProfileImage[0].profile_image.length > 0) {
-  //       let { profile_image } = getProfileImage[0];
+      if (getProfileImage[0].profile_image.length > 0) {
+        let { profile_image } = getProfileImage[0];
 
-  //       let mims = mime.contentType(profile_image);
-  //       //console.log("mimimime pri", mims);
-  //       const contents = await fs1.readFile(profile_image, {
-  //         encoding: "base64",
-  //       });
-  //       let image = `data:${mims};base64,${contents}`;
-  //       res.status(200).send({ image_path: profile_image, image_url: image });
-  //     } else {
-  //       res.status(200).send({ message: "image not found" });
-  //     }
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // },
+        let mims = mime.contentType(profile_image);
+        //console.log("mimimime pri", mims);
+        const contents = await fs1.readFile(profile_image, {
+          encoding: "base64",
+        });
+        let image = `data:${mims};base64,${contents}`;
+        res.status(200).send({ image_path: profile_image, image_url: image });
+      } else {
+        res.status(200).send({ message: "image not found" });
+      }
+    } catch (error) {
+      next(error);
+    }
+  },
 
   resetPassword: async (req, res, next) => {
     try {
@@ -847,30 +848,9 @@ module.exports = {
         historyTrans = `SELECT * FROM transaction`;
       }
 
-<<<<<<< HEAD
-      getProfileImage = await dbQuery(getSQL);
-
-      // console.log("waw", getProfileImage[0].profile_image);
-
-      if (getProfileImage[0].profile_image) {
-        let { profile_image } = getProfileImage[0];
-
-        let mims = mime.contentType(profile_image);
-        //console.log("mimimime pri", mims);
-        const contents = await fs1.readFile(profile_image, {
-          encoding: "base64",
-        });
-        let image = `data:${mims};base64,${contents}`;
-        res.status(200).send({ image_path: profile_image, image_url: image });
-      } else {
-        res.status(200).send({ message: "image not found" });
-      }
-    } catch (error) {
-=======
       history = await dbQuery(historyTrans);
       res.status(200).send(history);
     } catch (err) {
->>>>>>> upstream/develop
       next(error);
     }
   },

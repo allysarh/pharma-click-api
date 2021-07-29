@@ -22,6 +22,6 @@ router.get(
   userController.getTransactionDetail
 );
 
-router.patch("/patch-user", userController.patchUser);
-// router.get("/get-image-user", userController.getImageUser);
+router.patch("/patch-user", readToken, userController.patchUser);
+router.get("/get-image-user", userController.getImageUser);
 module.exports = router;
