@@ -24,5 +24,6 @@ router.get(
 
 router.patch("/patch-user", userController.patchUser);
 // router.get("/get-image-user", userController.getImageUser);
+router.patch("/set-default", userController.setDefault);
 
 module.exports = router;
