@@ -21,6 +21,7 @@ router.get(
   "/detail-transactions/:idtransaction",
   userController.getTransactionDetail
 );
+router.post("/upload-transaction", readToken, userController.uploadTransaction);
 
 router.patch("/patch-user", userController.patchUser);
 // router.get("/get-image-user", userController.getImageUser);
