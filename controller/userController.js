@@ -383,6 +383,10 @@ module.exports = {
         cart.push(item);
       });
 
+      deleteMinusProducts = await dbQuery(
+        `DELETE FROM cart WHERE qty < ${db.escape(1)}`
+      );
+
       let getAddress = `SELECT a.id,a.tag,a.recipient,a.id_city_origin,a.iduser,c.name,a.address,a.postal_code,a.set_default from address a join city c on a.id_city_origin = c.id where iduser = ${iduser};`;
       getAddress = await dbQuery(getAddress);
 

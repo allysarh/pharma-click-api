@@ -39,7 +39,7 @@ module.exports = {
   checkoutTransactions: async (req, res, next) => {
     try {
       let { iduser } = req.user;
-      console.log(req.body);
+      // console.log(req.body);
       let {
         id_transaction_status,
         idproduct,
@@ -55,57 +55,115 @@ module.exports = {
         idtype,
       } = req.body;
 
-      let postTransaction = `INSERT INTO transaction SET ?`;
-
-      let transaction = await dbQuery(postTransaction, {
-        iduser: iduser,
-        id_transaction_status: id_transaction_status,
-        invoice: invoice,
-        id_city_origin: id_city_origin,
-        id_city_destination: id_city_destination,
-        address: address,
-        recipient: recipient,
-        postal_code: postal_code,
-        shipping_cost: shipping_cost,
-        total_price: total_price,
-        note: note,
-        idtype: idtype,
+      //CHECK STOCK BEFORE CONTINUE BUYING
+      let id = [];
+      let qty = [];
+      idproduct.map((item) => {
+        // console.log("product", item);
+        return id.push({ idproduct: item.idproduct });
       });
 
-      console.log("TRANS ID", transaction.insertId);
-
-      let sql = `INSERT INTO transaction_detail SET ?`;
-
       idproduct.map((item) => {
-        let transactions = dbQuery(sql, {
+        return qty.push({
+          qty: item.qty_product,
           idproduct: item.idproduct,
-          idtransaction: transaction.insertId,
-          qty_buy: item.qty_product,
-          netto: item.netto,
         });
       });
 
-      idproduct.map((item) => {
-        let updateStock = dbQuery(
-          `UPDATE stock SET qty= qty-${db.escape(
-            item.qty_product
-          )},total_netto=total_netto-${db.escape(
-            item.total_netto
-          )} WHERE idproduct=${db.escape(item.idproduct)}`
-        );
+      let qtyStock,
+        dataSearch = [];
+
+      id.map((item) => {
+        for (let prop in item) {
+          dataSearch.push(`${prop} = ${db.escape(item[prop])}`);
+        }
       });
 
-      let deleteStock = `DELETE  FROM cart WHERE ? AND ?`;
-      idproduct.map((item) => {
-        let updateTransaction = dbQuery(deleteStock, [
-          {
+      if (dataSearch.length > 0) {
+        qtyStock = `SELECT * FROM stock WHERE ${dataSearch.join(" OR ")}`;
+      }
+      let stockQty = await dbQuery(qtyStock);
+
+      let checked = [];
+
+      stockQty.map((item, idx) => {
+        // console.log("stockqty", item.qty);
+        return qty.map((val) => {
+          if (item.idproduct === val.idproduct) {
+            console.log("qty", item.qty, val.qty);
+            if (item.qty >= val.qty) {
+              checked.push({ id: val.idproduct });
+            }
+          }
+        });
+      });
+      // console.log(checked);
+      // console.log(stockQty.length);
+
+      if (checked.length !== stockQty.length) {
+        let sqlProduct,
+          dataSearch = [];
+
+        checked.map((item) => {
+          for (let prop in item) {
+            dataSearch.push(`${prop} = ${db.escape(item[prop])}`);
+          }
+        });
+
+        if (dataSearch.length > 0) {
+          sqlProduct = `SELECT product_name from product WHERE ${dataSearch.join(
+            " AND "
+          )}`;
+        }
+        let unavailableProducts = await dbQuery(sqlProduct);
+        res.status(200).send({
+          message: `${unavailableProducts[0].product_name} not enough stock`,
+        });
+      } else {
+        let postTransaction = `INSERT INTO transaction SET ?`;
+        let transaction = await dbQuery(postTransaction, {
+          iduser: iduser,
+          id_transaction_status: id_transaction_status,
+          invoice: invoice,
+          id_city_origin: id_city_origin,
+          id_city_destination: id_city_destination,
+          address: address,
+          recipient: recipient,
+          postal_code: postal_code,
+          shipping_cost: shipping_cost,
+          total_price: total_price,
+          note: note,
+          idtype: idtype,
+        });
+        let sql = `INSERT INTO transaction_detail SET ?`;
+        idproduct.map((item) => {
+          let transactions = dbQuery(sql, {
             idproduct: item.idproduct,
-          },
-          { iduser: iduser },
-        ]);
-      });
-
-      res.status(200).send({ message: "transaction success" });
+            idtransaction: transaction.insertId,
+            qty_buy: item.qty_product,
+            netto: item.netto,
+          });
+        });
+        idproduct.map((item) => {
+          let updateStock = dbQuery(
+            `UPDATE stock SET qty= qty-${db.escape(
+              item.qty_product
+            )},total_netto=total_netto-${db.escape(
+              item.total_netto
+            )} WHERE idproduct=${db.escape(item.idproduct)}`
+          );
+        });
+        let deleteStock = `DELETE  FROM cart WHERE ? AND ?`;
+        idproduct.map((item) => {
+          let updateTransaction = dbQuery(deleteStock, [
+            {
+              idproduct: item.idproduct,
+            },
+            { iduser: iduser },
+          ]);
+        });
+        res.status(200).send({ message: "transaction success" });
+      }
     } catch (error) {
       console.log(error);
     }

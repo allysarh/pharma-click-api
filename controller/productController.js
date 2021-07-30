@@ -343,7 +343,8 @@ module.exports = {
   },
   incrementStock: async (req, res, next) => {
     try {
-      let { iduser, idproduct, qty, price } = req.body;
+      let { iduser, idproduct, qty, price, netto } = req.body;
+      console.log(req.body);
 
       let stock = await dbQuery(
         `SELECT * FROM stock s join product p on p.id = s.idproduct  WHERE idproduct =${db.escape(
@@ -355,6 +356,8 @@ module.exports = {
         let addStock = await dbQuery(
           `UPDATE cart SET qty= ${db.escape(qty + 1)},price= ${db.escape(
             stock[0].pack_price * (qty + 1)
+          )},total_netto = ${db.escape(
+            netto * (qty + 1)
           )} WHERE idproduct=${db.escape(idproduct)} AND iduser=${db.escape(
             iduser
           )}`
@@ -369,7 +372,7 @@ module.exports = {
   },
   decrementStock: async (req, res, next) => {
     try {
-      let { iduser, idproduct, qty, price } = req.body;
+      let { iduser, idproduct, qty, price, netto } = req.body;
 
       let stock = await dbQuery(
         `SELECT * FROM stock s join product p on p.id = s.idproduct  WHERE idproduct =${db.escape(
@@ -381,6 +384,8 @@ module.exports = {
         let incrementStock = await dbQuery(
           `UPDATE cart SET qty=${db.escape(qty - 1)},price = ${db.escape(
             stock[0].pack_price * (qty - 1)
+          )},total_netto = ${db.escape(
+            netto * (qty - 1)
           )} WHERE idproduct=${db.escape(idproduct)} AND iduser=${db.escape(
             iduser
           )}`
