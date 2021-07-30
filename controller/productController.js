@@ -272,7 +272,7 @@ module.exports = {
     addToCart: async (req, res, next) => {
         try {
             let { iduser, idproduct, qty, total_netto, price, product_name } = req.body;
-
+            console.log(req.body)
             if (getCartSort[0] === undefined) {
                 let addCart = await dbQuery(
                     `INSERT INTO cart VALUES (null,${db.escape(iduser)},${db.escape(
@@ -420,7 +420,9 @@ module.exports = {
     },
     getReviews: async (req, res, next) => {
         try {
-            dataReview = await productService.getReviews(req.body.idproduct)
+            let {product} = req.query
+            let idproduct = product.split('-')[product.split('-').length - 1]
+            dataReview = await productService.getReviews(idproduct)
             res.status(200).send(dataReview)
         } catch (error) {
             next(error)

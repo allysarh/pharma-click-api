@@ -865,7 +865,6 @@ module.exports = {
         }
       }
 
-      console.log(historyTrans)
       history = await dbQuery(historyTrans);
       res.status(200).send(history);
     } catch (err) {
@@ -876,7 +875,7 @@ module.exports = {
     try {
       let transactionDetail,
         dataSearch = [];
-      console.log(req.params)
+
       for (let prop in req.params) {
         dataSearch.push(`${prop} = ${db.escape(req.params[prop])}`);
       }
