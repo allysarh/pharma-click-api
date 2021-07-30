@@ -10,7 +10,6 @@ module.exports = {
     },
     getReviews: (idproduct) => {
         let dataReview = `select id as idreview, r.iduser, fullname, idproduct, review, rating, r.created_at, r.updated_at from review r left join user as u on r.iduser = u.iduser where r.idproduct = ${idproduct};`
-        console.log(dataReview)
         return dbQuery(dataReview)
     }
 }
