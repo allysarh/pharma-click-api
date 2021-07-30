@@ -1,8 +1,12 @@
 const fs = require("fs");
+const { productController } = require(".");
 const { uploader } = require("../config");
 const { dbQuery, db } = require("../config/database");
 const productService = require("../service/productService");
 const Product = require("../service/productService");
+var RajaOngkir = require("rajaongkir-nodejs").Starter(
+  "63b5cc834bb0e38090a2b629da2ca394"
+);
 
 module.exports = {
   getProduct: async (req, res, next) => {
@@ -294,27 +298,14 @@ module.exports = {
       );
 
       if (getCartSort[0] === undefined) {
-        if (getCartSort[0] === undefined) {
-          let addCart = await dbQuery(
-            `INSERT INTO cart VALUES (null,${db.escape(iduser)},${db.escape(
-              idproduct
-            )},${db.escape(qty)},${db.escape(total_netto)},${db.escape(
-              price
-            )},now(),now());`
-          );
-          res.status(200).send(`Success add to cart ${product_name}`);
-        } else {
-          if (qty + getCartSort[0].qty <= getStock[0].qty) {
-            let addCart = await dbQuery(
-              `INSERT INTO cart VALUES (null,${db.escape(iduser)},${db.escape(
-                idproduct
-              )},${db.escape(qty)},${db.escape(total_netto)},${db.escape(
-                price
-              )},now(),now());`
-            );
-            res.status(200).send(`Success add to cart ${product_name}`);
-          }
-        }
+        let addCart = await dbQuery(
+          `INSERT INTO cart VALUES (null,${db.escape(iduser)},${db.escape(
+            idproduct
+          )},${db.escape(qty)},${db.escape(total_netto)},${db.escape(
+            price
+          )},now(),now());`
+        );
+        res.status(200).send(`Success add to cart ${product_name}`);
       } else {
         if (
           getCartSort[0].iduser === iduser &&
@@ -370,7 +361,7 @@ module.exports = {
         );
         res.status(200).send(`Increment success`);
       } else {
-        res.status(200).send(`Out Of Stock Product`);
+        res.status(200).send({ message: `Out Of Stock Product` });
       }
     } catch (error) {
       next(error);
@@ -396,30 +387,35 @@ module.exports = {
         );
         res.status(200).send(`Decrement success`);
       } else {
-        res.status(200).send(`Stock can't null`);
+        res.status(200).send({ message: `quantity can't null` });
       }
     } catch (error) {
       next(error);
     }
   },
-  shippingCost: (req, res) => {
-    const params = {
-      origin: req.body.origin,
-      destination: req.body.destination,
-      weight: req.body.weight,
-    };
-    RajaOngkir.getJNECost(params)
-      .then(function (result) {
-        let cost = [];
-        result.rajaongkir.results.map((item) => {
-          item.costs.map((item) => {
-            cost.push({ cost: item.cost });
-          });
-        });
-        res.status(200).send(cost);
-      })
-      .catch(function (error) {
-        next(error);
-      });
+  deleteProductCart: async (req, res, next) => {
+    try {
+      let { idproduct, iduser } = req.query;
+      console.log(req.query);
+
+      console.log(idproduct);
+      console.log(iduser);
+      let deleteCart = await dbQuery(
+        `DELETE FROM cart WHERE idproduct =${db.escape(
+          idproduct
+        )} AND iduser =${db.escape(iduser)}`
+      );
+      res.status(200).send({ message: `Delete product from cart success` });
+    } catch (error) {
+      next(error);
+    }
+  },
+  getReviews: async (req, res, next) => {
+    try {
+      dataReview = await productService.getReviews(req.body.idproduct);
+      res.status(200).send(dataReview);
+    } catch (error) {
+      next(error);
+    }
   },
 };

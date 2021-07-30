@@ -10,6 +10,9 @@ const fs = require("fs");
 const fs1 = require("fs").promises;
 const Crypto = require("crypto");
 var mime = require("mime-types");
+var RajaOngkir = require("rajaongkir-nodejs").Starter(
+  "63b5cc834bb0e38090a2b629da2ca394"
+);
 
 module.exports = {
   accVerif: async (req, res, next) => {
@@ -98,115 +101,127 @@ module.exports = {
       next(error);
     }
   },
-  resgister: async (req, res, next) => {
+  register: async (req, res, next) => {
     try {
       let { nama, username, email, password } = req.body;
-      // GENERATE OTP
-      let char = "0123456789abcdefghijklmnoprstuvwxyz";
-      let OTP = "";
 
-      for (let i = 0; i < 6; i++) {
-        OTP += char.charAt(Math.floor(Math.random() * char.length));
+      if (email.match(/(\.com|\.co|\.id)/gi) && email.includes("@")) {
+        if (password.match(/^(?=.*[a-z].*)(?=.*[0-9].*)[a-z0-9]{6,}$/gi)) {
+          // GENERATE OTP
+          let char = "0123456789abcdefghijklmnoprstuvwxyz";
+          let OTP = "";
+
+          for (let i = 0; i < 6; i++) {
+            OTP += char.charAt(Math.floor(Math.random() * char.length));
+          }
+          // HASHING PASSOWRD
+          let hashPassword = Crypto.createHmac("sha256", "PHR$$$")
+            .update(password)
+            .digest("hex");
+          //console.log(hashPassword);
+
+          let register = `INSERT INTO user (fullname, username, email, idrole, idstatus, password, otp) values (${db.escape(
+            nama
+          )}, ${db.escape(username)}, ${db.escape(email)},  2, 2, ${db.escape(
+            hashPassword
+          )}, ${db.escape(OTP)});`;
+
+          register = await dbQuery(register);
+
+          let iduser = register.insertId;
+
+          // CREATE TOKEN
+          let token = createToken({ iduser, username, email });
+
+          //  Email configuration
+          let mail = {
+            from: "PHARMACLICK-ADMIN <allysa.rahagustiani@gmail.com>",
+            to: email,
+            subject: "[PHARMACLICK VERFICATION EMAIL]",
+            html: ` <table cellpadding="0" cellspacing="0" class="es-content" align="center">
+            <tbody>
+            <tr>
+            <td class="esd-stripe" align="center">
+            <table bgcolor="#ffffff" class="es-content-body" align="center" cellpadding="0" cellspacing="0" width="700">
+            <tbody>
+            <tr>
+            <td class="esd-structure es-p40t es-p20b es-p20r es-p20l" align="left" esd-custom-block-id="334499">
+            <table cellpadding="0" cellspacing="0" width="100%">
+            <tbody>
+            <tr>
+            <td width="660" class="esd-container-frame" align="center" valign="top">
+            <table cellpadding="0" cellspacing="0" width="100%">
+            <tbody>
+            <tr>
+            <td align="center" class="esd-block-image" style="font-size: 0px;"><a target="_blank"><img src="https://tlr.stripocdn.email/content/guids/CABINET_2663efe83689b9bda1312f85374f56d2/images/10381620386430630.png" alt style="display: block;" width="100"></a></td>
+            </tr>
+            <tr>
+            <td align="center" class="esd-block-text">
+            <h2>Verify your email to finish signing up</h2>
+            </td>
+            </tr>
+            <tr>
+            <td align="center" class="esd-block-spacer es-p10t es-p10b es-m-txt-c" style="font-size:0">
+            <table border="0" width="40%" height="100%" cellpadding="0" cellspacing="0" style="width: 40% !important; display: inline-table;">
+            <tbody>
+            <tr>
+            <td style="border-bottom: 1px solid #cccccc; background:none; height:1px; width:100%; margin:0px 0px 0px 0px;"></td>
+            </tr>
+            </tbody>
+                                                                              </table>
+                                                                              </td>
+                                                                              </tr>
+                                                                              <tr>
+                                                                              <td align="center" class="esd-block-text es-p5t es-p5b es-p40r es-m-p0r" esd-links-underline="none">
+                                                                              <p>Thank you for choosing PHARMACLICK.</p>
+                                                                              <p><br></p>
+                                                                              <p>Please confirm that <strong><a target="_blank" href="mailto:${email}" style="text-decoration: none;">${email}</a></strong>&nbsp;is your email address by input OTP on the button below to <a target="_blank" href="http://localhost:3000/verif/${token}" style="text-decoration: none; word-break: break-all;">this link</a> within <strong>48 hours</strong>.</p>
+                                                                              </td>
+                                                                              </tr>
+                                                                              <tr>
+                                                                              <td align="center" class="esd-block-spacer es-p10t es-p10b es-m-txt-c" style="font-size:0">
+                                                                              <table border="0" width="40%" height="100%" cellpadding="0" cellspacing="0" style="width: 40% !important; display: inline-table;">
+                                                                              <tbody>
+                                                                              <tr>
+                                                                              <td style="border-bottom: 1px solid #cccccc; background:none; height:1px; width:100%; margin:0px 0px 0px 0px;"></td>
+                                                                              </tr>
+                                                                              </tbody>
+                                                                              </table>
+                                                                          </td>
+                                                                          </tr>
+                                                                          <tr>
+                                                                          <td align="center" class="esd-block-button es-p10t es-p10b es-m-txt-l">
+                                                                          <h3>Your OTP:</h3>
+                                                                          <h1 style="border: 1px solid black; background: #ffffff;">${OTP}</h1>
+                                                                          </td>
+                                                                          </tr>
+                                                                          </tbody>
+                                                                          </table>
+                                                                          </td>
+                                                                          </tr>
+                                                                          </tbody>
+                                                                          </table>
+                                                                          </td>
+                                                                          </tr>
+                                                                          </tbody>
+                                                                          </table>
+                                                                          </td>
+                                                                          </tr>
+                                                                          </tbody>
+                                                                          </table>`,
+          };
+          await transporter.sendMail(mail);
+          res
+            .status(200)
+            .send({ status: 200, messages: "Register Succes", register: true });
+        } else {
+          res
+            .status(400)
+            .send({ status: 400, messages: "Invalid password format" });
+        }
+      } else {
+        res.status(400).send({ status: 400, messages: "Invalid email format" });
       }
-      // HASHING PASSOWRD
-      let hashPassword = Crypto.createHmac("sha256", "PHR$$$")
-        .update(password)
-        .digest("hex");
-      //console.log(hashPassword);
-      let register = `INSERT INTO user (fullname, username, email, idrole, idstatus, password, otp) values (${db.escape(
-        nama
-      )}, ${db.escape(username)}, ${db.escape(email)},  2, 2, ${db.escape(
-        hashPassword
-      )}, ${db.escape(OTP)});`;
-
-      register = await dbQuery(register);
-
-      let iduser = register.insertId;
-
-      // CREATE TOKEN
-      let token = createToken({ iduser, username, email });
-
-      //  Email configuration
-      let mail = {
-        from: "PHARMACLICK-ADMIN <allysa.rahagustiani@gmail.com>",
-        to: email,
-        subject: "[PHARMACLICK VERFICATION EMAIL]",
-        html: ` <table cellpadding="0" cellspacing="0" class="es-content" align="center">
-                <tbody>
-                    <tr>
-                        <td class="esd-stripe" align="center">
-                            <table bgcolor="#ffffff" class="es-content-body" align="center" cellpadding="0" cellspacing="0" width="700">
-                                <tbody>
-                                    <tr>
-                                        <td class="esd-structure es-p40t es-p20b es-p20r es-p20l" align="left" esd-custom-block-id="334499">
-                                            <table cellpadding="0" cellspacing="0" width="100%">
-                                                <tbody>
-                                                    <tr>
-                                                        <td width="660" class="esd-container-frame" align="center" valign="top">
-                                                            <table cellpadding="0" cellspacing="0" width="100%">
-                                                                <tbody>
-                                                                    <tr>
-                                                                        <td align="center" class="esd-block-image" style="font-size: 0px;"><a target="_blank"><img src="https://tlr.stripocdn.email/content/guids/CABINET_2663efe83689b9bda1312f85374f56d2/images/10381620386430630.png" alt style="display: block;" width="100"></a></td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <td align="center" class="esd-block-text">
-                                                                            <h2>Verify your email to finish signing up</h2>
-                                                                        </td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <td align="center" class="esd-block-spacer es-p10t es-p10b es-m-txt-c" style="font-size:0">
-                                                                            <table border="0" width="40%" height="100%" cellpadding="0" cellspacing="0" style="width: 40% !important; display: inline-table;">
-                                                                                <tbody>
-                                                                                    <tr>
-                                                                                        <td style="border-bottom: 1px solid #cccccc; background:none; height:1px; width:100%; margin:0px 0px 0px 0px;"></td>
-                                                                                    </tr>
-                                                                                </tbody>
-                                                                            </table>
-                                                                        </td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <td align="center" class="esd-block-text es-p5t es-p5b es-p40r es-m-p0r" esd-links-underline="none">
-                                                                            <p>Thank you for choosing PHARMACLICK.</p>
-                                                                            <p><br></p>
-                                                                            <p>Please confirm that <strong><a target="_blank" href="mailto:${email}" style="text-decoration: none;">${email}</a></strong>&nbsp;is your email address by input OTP on the button below to <a target="_blank" href="http://localhost:3000/verif/${token}" style="text-decoration: none; word-break: break-all;">this link</a> within <strong>48 hours</strong>.</p>
-                                                                        </td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <td align="center" class="esd-block-spacer es-p10t es-p10b es-m-txt-c" style="font-size:0">
-                                                                            <table border="0" width="40%" height="100%" cellpadding="0" cellspacing="0" style="width: 40% !important; display: inline-table;">
-                                                                                <tbody>
-                                                                                    <tr>
-                                                                                        <td style="border-bottom: 1px solid #cccccc; background:none; height:1px; width:100%; margin:0px 0px 0px 0px;"></td>
-                                                                                    </tr>
-                                                                                </tbody>
-                                                                            </table>
-                                                                        </td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <td align="center" class="esd-block-button es-p10t es-p10b es-m-txt-l">
-                                                                        <h3>Your OTP:</h3>
-                                                                        <h1 style="border: 1px solid black; background: #ffffff;">${OTP}</h1>
-                                                                        </td>
-                                                                    </tr>
-                                                                </tbody>
-                                                            </table>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>`,
-      };
-      await transporter.sendMail(mail);
-      res
-        .status(200)
-        .send({ status: 200, messages: "Register Succes", register: true });
     } catch (error) {
       next(error);
     }
@@ -266,14 +281,16 @@ module.exports = {
               phone_number,
             });
 
-            let getCart = `SELECT *,p.product_name from cart c join product_image pi on pi.idproduct = c.idproduct join product p on p.id = c.idproduct where iduser = ${iduser};`;
+            let getCart = `SELECT *,p.product_name,s.qty as qty_product from cart c 
+            join product_image pi on pi.idproduct = c.idproduct 
+            join product p on p.id = c.idproduct join stock s on s.idproduct = p.id where iduser = ${iduser};`;
             getCart = await dbQuery(getCart);
 
             getCart.forEach((item, index) => {
               cart.push(item);
             });
 
-            let getAddress = `SELECT * from address where iduser = ${iduser};`;
+            let getAddress = `SELECT * from address a join city c on a.id_city_origin = c.id WHERE a.iduser = ${iduser};`;
             getAddress = await dbQuery(getAddress);
 
             getAddress.forEach((val, i) => {
@@ -366,7 +383,7 @@ module.exports = {
         cart.push(item);
       });
 
-      let getAddress = `SELECT a.id,a.tag,a.recipient,a.id_city_origin,a.iduser,c.name,a.address,a.postal_code from address a join city c on a.id_city_origin = c.id where iduser = ${iduser};`;
+      let getAddress = `SELECT a.id,a.tag,a.recipient,a.id_city_origin,a.iduser,c.name,a.address,a.postal_code,a.set_default from address a join city c on a.id_city_origin = c.id where iduser = ${iduser};`;
       getAddress = await dbQuery(getAddress);
 
       getAddress.forEach((val, i) => {
@@ -448,7 +465,7 @@ module.exports = {
 
       let getCart = `SELECT * from cart;`;
       getCart = await dbQuery(getCart);
-      console.log(getCart);
+      // console.log(getCart);
 
       getUser.forEach((item, index) => {
         item.address = [];
@@ -465,7 +482,7 @@ module.exports = {
         });
 
         getCart.forEach((val, id) => {
-          console.log("c", val);
+          // console.log("c", val);
           if (item.iduser == val.iduser) {
             item.cart.push(val);
           }
@@ -484,7 +501,7 @@ module.exports = {
 
       let verifyEmail = `SELECT * from user where email = ${db.escape(email)};`;
       verifyEmail = await dbQuery(verifyEmail);
-      console.log(verifyEmail);
+      // console.log(verifyEmail);
 
       if (verifyEmail.length > 0) {
         let {
@@ -626,14 +643,14 @@ module.exports = {
       }
 
       if (dataSearch.length > 0) {
-        getSQL = `SELECT a.id,a.tag,a.recipient,a.id_city_origin,a.iduser,c.name,a.address,a.postal_code FROM address a JOIN city c on a.id_city_origin = c.id WHERE ${dataSearch.join(
+        getSQL = `SELECT a.id,a.tag,a.recipient,a.id_city_origin,a.iduser,c.name,a.address,a.postal_code,a.set_default FROM address a JOIN city c on a.id_city_origin = c.id WHERE ${dataSearch.join(
           " AND "
         )}`;
       } else {
-        getSQL = `SELECT a.id,a.tag,a.recipient,a.id_city_origin,a.iduser,c.name,a.address,a.postal_code FROM address a JOIN city c on a.id_city_origin = c.id`;
+        getSQL = `SELECT a.id,a.tag,a.recipient,a.id_city_origin,a.iduser,c.name,a.address,a.postal_code,a.set_default FROM address a JOIN city c on a.id_city_origin = c.id`;
       }
       getAddress = await dbQuery(getSQL);
-      res.status(200).send(getAddress);
+      res.status(200).send(getAddress[0]);
     } catch (error) {
       next(error);
     }
@@ -740,18 +757,6 @@ module.exports = {
               }
 
               let { profile_image } = getImage[0];
-
-              // patchUsers = await dbQuery(
-              //   `UPDATE user SET fullname=${db.escape(
-              //     json.fullName
-              //   )},gender=${db.escape(json.gender)},age=${db.escape(
-              //     json.age
-              //   )},email=${db.escape(json.email)},profile_image=${db.escape(
-              //     profile_image
-              //   )},age=${db.escape(json.age)},phone_number=${db.escape(
-              //     json.phoneNumber
-              //   )} WHERE iduser=${db.escape(json.iduser)}`
-              // );
             }
           } catch (error) {
             // if (req.files.images) {
@@ -856,15 +861,13 @@ module.exports = {
   },
   getTransactionDetail: async (req, res, next) => {
     try {
-      // console.log("idtransaction", req.params.idtransaction);
       let transactionDetail,
         dataSearch = [];
-      for (let prop in req.query) {
-        dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
+      for (let prop in req.params) {
+        dataSearch.push(`${prop} = ${db.escape(req.params[prop])}`);
       }
 
       if (dataSearch.length > 0) {
-        let { idtransaction } = req.params;
         transactionDetail = `select * from transaction_detail td join transaction t on td.idtransaction = t.id join product p on p.id = td.idproduct join product_image pi on pi.idproduct = td.idproduct where ${dataSearch.join(
           " AND "
         )}`;
@@ -878,6 +881,91 @@ module.exports = {
 
       res.status(200).send(history);
     } catch (err) {
+      next(error);
+    }
+  },
+  setDefault: async (req, res, next) => {
+    try {
+      let { idaddress, iduser } = req.body;
+
+      // console.log("cek default", idaddress, iduser);
+
+      let cekDefault = await dbQuery(
+        `UPDATE address SET set_default=${db.escape(
+          2
+        )} WHERE iduser=${db.escape(iduser)} AND set_default=${db.escape(
+          1
+        )} AND id != ${db.escape(idaddress)}`
+      );
+
+      let setDefault = await dbQuery(
+        `UPDATE address SET set_default=${db.escape(1)} WHERE id=${db.escape(
+          idaddress
+        )} `
+      );
+      res
+        .status(200)
+        .send({ status: 200, messages: "Success change default address" });
+    } catch (error) {
+      next(error);
+    }
+  },
+  uploadTransaction: async (req, res, next) => {
+    try {
+      let { iduser } = req.user;
+      let { idtransaction, id_transaction_status } = req.body;
+      const upload = uploader("/transactions", "IMG").fields([
+        { name: "images" },
+      ]);
+      // console.log("requuestnya body", req.body);
+      upload(req, res, async (error) => {
+        if (error) {
+          //hapus gambar jika proses upload error
+          fs.unlinkSync(
+            `./public/transactions/${req.files.images[0].filename}`
+          );
+          next(error);
+        }
+        try {
+          var json = JSON.parse(req.body.data);
+          const { images } = req.files;
+          // console.log(images);
+          console.log("req body data", req.body);
+          //console.log("cek file upload :", images);
+
+          if (images !== undefined) {
+            let image_profile = images[0].path;
+            let uploadTransaction =
+              await dbQuery(`Insert into confirmation_payment values (null,${db.escape(
+                json.idtransaction
+              )},${db.escape(json.id_transaction_status)},
+                ${db.escape(image_profile)},now(),now())`);
+
+            let updateStatusTransaction = await dbQuery(
+              `UPDATE transaction SET id_transaction_status = ${db.escape(
+                json.id_transaction_status
+              )} WHERE id = ${db.escape(json.idtransaction)} `
+            );
+          }
+        } catch (error) {
+          if (req.files.images) {
+            await fs.unlinkSync(
+              `./public/transactions/${req.files.images[0].filename}`
+            );
+          }
+          next(error);
+        }
+      });
+      res.status(200).send({ message: "Success Upload Transaction Proof" });
+    } catch (error) {
+      next(error);
+    }
+  },
+  getCity: async (req, res, next) => {
+    try {
+      origin = await dbQuery(`SELECT * FROM city`);
+      res.status(200).send(origin);
+    } catch (error) {
       next(error);
     }
   },
