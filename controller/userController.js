@@ -843,13 +843,9 @@ module.exports = {
       let historyTrans,
         dataSearch = [];
       for (let prop in req.query) {
-        if(prop.includes('iduser')){
-          dataSearch.push(`t.${prop} = ${db.escape(req.query[prop])}`);
-        } else {
-          dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
-        }
+        dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
       }
-      console.log(dataSearch)
+
       if (dataSearch.length > 0) {
         let { idtype } = req.params;
         historyTrans = `SELECT t.id, t.iduser as iduser, t.invoice,c.name as origin, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note FROM transaction t 
@@ -859,10 +855,16 @@ module.exports = {
         join city ct on ct.id = t.id_city_destination where ${dataSearch.join(
           " AND "
         )}`;
+        if(req.user.role == "user"){
+          historyTrans += ` and t.iduser = ${req.user.iduser}`
+        }
       } else {
         historyTrans = `SELECT * FROM transaction`;
+        if(req.user.role == "user"){
+          historyTrans += ` where iduser = ${req.user.iduser}`
+        }
       }
-      
+
       console.log(historyTrans)
       history = await dbQuery(historyTrans);
       res.status(200).send(history);
@@ -874,7 +876,7 @@ module.exports = {
     try {
       let transactionDetail,
         dataSearch = [];
-        console.log(req.params)
+      console.log(req.params)
       for (let prop in req.params) {
         dataSearch.push(`${prop} = ${db.escape(req.params[prop])}`);
       }
