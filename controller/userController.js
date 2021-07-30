@@ -843,12 +843,16 @@ module.exports = {
       let historyTrans,
         dataSearch = [];
       for (let prop in req.query) {
-        dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
+        if(prop.includes('iduser')){
+          dataSearch.push(`t.${prop} = ${db.escape(req.query[prop])}`);
+        } else {
+          dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
+        }
       }
-
+      console.log(dataSearch)
       if (dataSearch.length > 0) {
         let { idtype } = req.params;
-        historyTrans = `SELECT t.id,t.invoice,c.name as origin, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note FROM transaction t 
+        historyTrans = `SELECT t.id, t.iduser as iduser, t.invoice,c.name as origin, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note FROM transaction t 
         join user u on u.iduser=t.iduser 
         join transaction_status ts on t.id_transaction_status=ts.id 
         join city c on t.id_city_origin = c.id 
@@ -858,7 +862,8 @@ module.exports = {
       } else {
         historyTrans = `SELECT * FROM transaction`;
       }
-
+      
+      console.log(historyTrans)
       history = await dbQuery(historyTrans);
       res.status(200).send(history);
     } catch (err) {
