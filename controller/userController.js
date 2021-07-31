@@ -13,6 +13,7 @@ var mime = require("mime-types");
 var RajaOngkir = require("rajaongkir-nodejs").Starter(
   "63b5cc834bb0e38090a2b629da2ca394"
 );
+const sharp = require('sharp');
 
 module.exports = {
   accVerif: async (req, res, next) => {
@@ -694,7 +695,7 @@ module.exports = {
   },
   patchUser: async (req, res, next) => {
     try {
-      console.log("req user", req.user);
+      // console.log("req user", req.user);
       const upload = uploaderProfile(
         "/profile",
         `IMG#PRFL#USR${req.user.iduser}.`
@@ -714,9 +715,8 @@ module.exports = {
           try {
             var json = JSON.parse(req.body.data);
             const { images } = req.files;
-            // console.log(images);
-            // console.log("req body data", images);
-            //console.log("cek file upload :", images);
+        
+
             let postProduct = `Insert into products values (null,${db.escape(
               json.nama
             )},${db.escape(json.brand)},
@@ -726,7 +726,7 @@ module.exports = {
 
             let getImage = await dbQuery(
               `SELECT profile_image from user where iduser=${db.escape(
-                json.iduser
+                req.user.iduser
               )}`
             );
 
@@ -742,7 +742,7 @@ module.exports = {
                   image_profile
                 )},age=${db.escape(json.age)},phone_number=${db.escape(
                   json.phoneNumber
-                )} WHERE iduser=${db.escape(json.iduser)}`
+                )} WHERE iduser=${db.escape(req.user.iduser)}`
               );
             } else {
               let image_profile = "";
@@ -756,18 +756,19 @@ module.exports = {
                 getSQL = await dbQuery(
                   `UPDATE user SET ${dataSearch.join(
                     " , "
-                  )} WHERE iduser=${db.escape(json.iduser)}`
+                  )} WHERE iduser=${db.escape(req.user.iduser)}`
                 );
               }
 
               let { profile_image } = getImage[0];
+
             }
           } catch (error) {
-            // if (req.files.images) {
-            //   await fs1.unlinkSync(
-            //     `./public/profile/${req.files.images[0].filename}`
-            //   );
-            // }
+            if (req.files.images) {
+              await fs.unlinkSync(
+                `./public/profile/${req.files.images[0].filename}`
+              );
+            }
             next(error);
           }
         }
@@ -799,16 +800,19 @@ module.exports = {
 
       // console.log("waw", getProfileImage[0].profile_image);
 
-      if (getProfileImage[0].profile_image.length > 0) {
-        let { profile_image } = getProfileImage[0];
 
-        let mims = mime.contentType(profile_image);
-        //console.log("mimimime pri", mims);
-        const contents = await fs1.readFile(profile_image, {
+        
+        
+      if (getProfileImage.length) {
+        let { profile_image } = getProfileImage[0];
+        if (fs.existsSync(profile_image)) {
+          const contents = await fs1.readFile(profile_image, {
           encoding: "base64",
         });
+        let mims = mime.contentType(profile_image);
         let image = `data:${mims};base64,${contents}`;
         res.status(200).send({ image_path: profile_image, image_url: image });
+} 
       } else {
         res.status(200).send({ message: "image not found" });
       }

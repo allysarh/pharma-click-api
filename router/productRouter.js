@@ -13,12 +13,11 @@ router.delete(
   authorization,
   productController.deleteProduct
 );
-router.get("/get-products", productController.getProducts);
+// router.get("/get-products", productController.getProducts);
 router.get("/get-city", productController.getCity);
 router.patch("", authentication, authorization, productController.editProduct);
 router.patch("/increment", productController.incrementStock);
 router.patch("/decrement", productController.decrementStock);
 router.post("/add-to-cart", productController.addToCart);
-router.delete("/delete", productController.deleteProductCart);
 
 module.exports = router;

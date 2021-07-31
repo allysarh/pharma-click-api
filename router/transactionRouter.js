@@ -10,5 +10,6 @@ router.post(
   readToken,
   transactionController.perscriptionTransaction
 );
+router.delete("/delete", transactionController.deleteProductCart);
 
 module.exports = router;

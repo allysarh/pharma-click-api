@@ -238,5 +238,21 @@ module.exports = {
     } catch (error) {
       console.log(error);
     }
+  },deleteProductCart: async (req, res, next) => {
+    try {
+      let { idproduct, iduser } = req.query;
+      console.log(req.query);
+
+      console.log(idproduct);
+      console.log(iduser);
+      let deleteCart = await dbQuery(
+        `DELETE FROM cart WHERE idproduct =${db.escape(
+          idproduct
+        )} AND iduser =${db.escape(iduser)}`
+      );
+      res.status(200).send({ message: `Delete product from cart success` });
+    } catch (error) {
+      next(error);
+    }
   },
 };
