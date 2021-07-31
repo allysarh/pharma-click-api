@@ -848,15 +848,21 @@ module.exports = {
 
       if (dataSearch.length > 0) {
         let { idtype } = req.params;
-        historyTrans = `SELECT t.id,t.invoice,c.name as origin, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note FROM transaction t 
+        historyTrans = `SELECT t.id, t.iduser as iduser, t.invoice,c.name as origin, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note FROM transaction t 
         join user u on u.iduser=t.iduser 
         join transaction_status ts on t.id_transaction_status=ts.id 
         join city c on t.id_city_origin = c.id 
         join city ct on ct.id = t.id_city_destination where ${dataSearch.join(
           " AND "
         )}`;
+        if(req.user.role == "user"){
+          historyTrans += ` and t.iduser = ${req.user.iduser}`
+        }
       } else {
         historyTrans = `SELECT * FROM transaction`;
+        if(req.user.role == "user"){
+          historyTrans += ` where iduser = ${req.user.iduser}`
+        }
       }
 
       history = await dbQuery(historyTrans);
@@ -869,6 +875,7 @@ module.exports = {
     try {
       let transactionDetail,
         dataSearch = [];
+
       for (let prop in req.params) {
         dataSearch.push(`${prop} = ${db.escape(req.params[prop])}`);
       }

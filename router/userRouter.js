@@ -16,7 +16,7 @@ router.get("/get-address", userController.getAddress);
 router.post("/post-address", userController.postAddress);
 router.delete("/delete-address", userController.deleteAddress);
 router.patch("/patch-address", userController.patchAddress);
-router.get("/sort-transactions", userController.getHistoryTransaction);
+router.get("/sort-transactions", readToken, userController.getHistoryTransaction);
 router.get(
   "/detail-transactions/:idtransaction",
   userController.getTransactionDetail

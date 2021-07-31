@@ -14,10 +14,10 @@ router.get("/get-city", productController.getCity);
 router.patch('', authentication, authorization, productController.editProduct)
 router.patch("/increment", productController.incrementStock);
 router.patch("/decrement", productController.decrementStock);
-router.post("/shipping-cost", productController.shippingCost);
-router.post("/add-to-cart", productController.addToCart);
-module.exports = router
 // router.post("/shipping-cost", productController.shippingCost);
-router.delete("/delete", productController.deleteProductCart);
+router.post("/add-to-cart", productController.addToCart);
+
+// router.post("/shipping-cost", productController.shippingCost);
+router.delete("", productController.deleteProductCart);
 
 module.exports = router;
