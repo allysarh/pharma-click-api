@@ -278,6 +278,15 @@ module.exports = {
   addToCart: async (req, res, next) => {
     try {
       let { iduser, idproduct, qty, total_netto, price, product_name } = req.body;
+      getCartSort = await dbQuery(
+        `SELECT * FROM cart WHERE iduser=${db.escape(
+          iduser
+        )} AND idproduct=${db.escape(idproduct)}`
+      );
+
+      getStock = await dbQuery(
+        `SELECT * FROM stock WHERE idproduct=${db.escape(idproduct)} `
+      );
       console.log(req.body)
       if (getCartSort[0] === undefined) {
         let addCart = await dbQuery(
