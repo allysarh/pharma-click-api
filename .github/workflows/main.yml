@@ -16,4 +16,4 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-            cd ${{ secrets.PROJECT_PATH }} && git pull origin ${{ secrets.BRANCH }}
+            cd ${{ secrets.PROJECT_PATH }} && git add . && git commit -m "BE-master : server commit" && git pull origin ${{ secrets.BRANCH }}
