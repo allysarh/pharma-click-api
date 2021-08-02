@@ -5,6 +5,7 @@ const fs1 = require("fs").promises;
 const Transactions = require("../service/transactionsService");
 const { parse } = require("dotenv");
 const { detail } = require("../service/transactionsService");
+const { nextTick } = require("process");
 
 var RajaOngkir = require("rajaongkir-nodejs").Starter(
   "8b59fc64454aba0cbdc1fcc8a03daf39"
@@ -270,7 +271,8 @@ module.exports = {
         item.month = parseInt(date[0])
         item.day = parseInt(date[1])
         item.year = parseInt(date[2])
-        item.week = Math.floor(date[1] / 7)
+        let week = Math.floor(date[1] / 7)
+        item.week = week > 0 ? week : week += 1
         delete item.updated_at
       })
 
@@ -309,6 +311,14 @@ module.exports = {
       res.status(200).send(revenue)
     } catch (error) {
       next(error)
+    }
+  },
+  productSales: async (req, res, next) =>{
+    try {
+      let productSales = await Transactions.productSales()
+      res.status(200).send(productSales)
+    } catch (error) {
+      nextTick(error)
     }
   }
 };
