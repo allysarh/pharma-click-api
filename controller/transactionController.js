@@ -2,6 +2,7 @@ const { uploader } = require("../config");
 const { dbQuery, db } = require("../config/database");
 const fs = require("fs");
 const fs1 = require("fs").promises;
+const transactionsService = require("../service/transactionsService");
 var RajaOngkir = require("rajaongkir-nodejs").Starter(
   "8b59fc64454aba0cbdc1fcc8a03daf39"
 );
@@ -257,7 +258,7 @@ module.exports = {
   },
   salesReport: async (req, res, next) => {
     try {
-      let detail = await Transactions.detail()
+      let detail = await t.detail()
       // console.log(detail[0].created_at.toLocaleDateString())
 
       detail.forEach((item, index) => {
