@@ -350,16 +350,6 @@ module.exports = {
             }
           }
         }
-        // else {
-        //   let addCart = await dbQuery(
-        //     `INSERT INTO cart VALUES (null,${db.escape(iduser)},${db.escape(
-        //       idproduct
-        //     )},${db.escape(qty)},${db.escape(total_netto)},${db.escape(
-        //       price
-        //     )},now(),now());`
-        //   );
-        //   res.status(200).send(`Success add to cart ${product_name}`);
-        // }
       }
     } catch (error) {
       next(error);

@@ -11,5 +11,8 @@ router.post(
   transactionController.perscriptionTransaction
 );
 router.delete("/delete", transactionController.deleteProductCart);
+router.get("/bill", transactionController.getTransaction);
+router.patch("/accept/:id", readToken,transactionController.acceptTransaction);
+router.patch("/reject/:id", readToken,transactionController.rejectTransaction);
 
 module.exports = router;

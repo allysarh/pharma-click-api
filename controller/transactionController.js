@@ -238,7 +238,8 @@ module.exports = {
     } catch (error) {
       console.log(error);
     }
-  },deleteProductCart: async (req, res, next) => {
+  }
+  ,deleteProductCart: async (req, res, next) => {
     try {
       let { idproduct, iduser } = req.query;
       console.log(req.query);
@@ -255,4 +256,53 @@ module.exports = {
       next(error);
     }
   },
-};
+  getTransaction:async(req,res,next)=>{
+    try {
+      let transactionSQL,transactions,
+        dataSearch = [];
+      for (let prop in req.params) {
+        dataSearch.push(`${prop} = ${db.escape(req.params[prop])}`);
+      }
+
+      if (dataSearch.length > 0) {
+        transactionSQL = await dbQuery(`SELECT * FROM transaction where ${dataSearch.join(
+          " AND "
+        )}`)
+      }else{
+        transactionSQL = await dbQuery(`SELECT * FROM transaction `)
+      }
+      res.status(200).send(transactionSQL)
+    } catch (error) {
+      next(error)
+    }
+  },
+  acceptTransaction:async(req,res,next) => {
+    try {
+      let {id} = req.params
+      let {iduser} = req.user
+      console.log(req.user)
+      console.log(req.params)
+    if(req.user.role === "admin"){
+      acceptSQL = await dbQuery(`UPDATE transaction SET id_transaction_status = 1 WHERE id=${db.escape(id)}`)
+    }
+      res.status(200).send({message:"success aceppt transaction"})
+    } catch (error) {
+      next(error)
+    }
+  },
+  rejectTransaction:async(req,res,next) => {
+    try {
+      let {id} = req.params
+      let {iduser} = req.user
+      console.log(req.user)
+      console.log(req.params)
+    if(req.user.role === "admin"){
+      acceptSQL = await dbQuery(`UPDATE transaction SET id_transaction_status = 3 WHERE id=${db.escape(id)}`)
+    }
+      res.status(200).send({message:"success reject transaction"})
+    } catch (error) {
+      next(error)
+    }
+    
+  }
+}
