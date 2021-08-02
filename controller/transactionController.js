@@ -2,7 +2,10 @@ const { uploader } = require("../config");
 const { dbQuery, db } = require("../config/database");
 const fs = require("fs");
 const fs1 = require("fs").promises;
-const transactionsService = require("../service/transactionsService");
+const Transactions = require("../service/transactionsService");
+const { parse } = require("dotenv");
+const { detail } = require("../service/transactionsService");
+
 var RajaOngkir = require("rajaongkir-nodejs").Starter(
   "8b59fc64454aba0cbdc1fcc8a03daf39"
 );
@@ -258,10 +261,9 @@ module.exports = {
   },
   salesReport: async (req, res, next) => {
     try {
-      let detail = await t.detail()
-      // console.log(detail[0].created_at.toLocaleDateString())
+      let getDetail = await Transactions.detail(req.query)
 
-      detail.forEach((item, index) => {
+      getDetail.forEach((item, index) => {
         let date = item.created_at.toLocaleDateString().split('/')
         item.created_at = item.created_at.toLocaleDateString()
         item.updated_at = item.updated_at
@@ -270,72 +272,41 @@ module.exports = {
         item.year = parseInt(date[2])
         item.week = Math.floor(date[1] / 7)
         delete item.updated_at
-        // delete item.created_at
       })
 
-      let start
-      let end
-      let hasil = detail
+      let response = [{ total_product: 0, total_qty: 0, detail: [] }]
+      response[0].detail = getDetail
+      total_qty = getDetail.reduce((a, b) => a + b.qty_buy, 0)
 
-      console.log(start)
-      console.log(end)
+      let total_product = getDetail.map(item => item.product_name).filter((item, index, self) => self.indexOf(item) == index).length
+      response[0].total_qty = total_qty
+      response[0].total_product = total_product
 
-      if (req.query.start) start = new Date(`${req.query.start} GMT`)
-      if (req.query.end) end = new Date(`${req.query.end} GMT`)
 
-      if (req.query.start && req.query.end) {
-        hasil = detail.filter(item => {
-          let date = new Date(item.created_at)
-          return (date >= start && date <= end)
-        })
-      }
-      // console.log("hasil", hasil)
-      // function groupBy(objectArray, property) {
-      //   return objectArray.reduce(function (acc, obj) {
-      //     let key = obj[property]
-      //     if (!acc[key]) {
-      //       acc[key] = [{ total_qty: 0, total_product: 0, detail: [] }]
-      //     }
+      res.status(200).send(response)
+    } catch (error) {
+      next(error)
+    }
+  },
+  revenue: async (req, res, next) => {
+    try {
+      let transactions = await Transactions.revenue(req.query)
+      transactions.forEach((item) => {
+        let date = item.created_at.toLocaleDateString().split('/')
+        item.created_at = item.created_at.toLocaleDateString()
+        item.updated_at = item.updated_at
+        item.month = parseInt(date[0])
+        item.day = parseInt(date[1])
+        item.year = parseInt(date[2])
+        item.week = Math.floor(date[1] / 7)
+        delete item.updated_at
 
-      //     if (req.query.day) {
-      //       if (obj.day == req.query.day) {
-      //         acc[key][0].detail.push(obj)
-      //         acc[key][0].total_qty += obj.qty_buy
-      //         acc[key][0].total_product += 1
-
-      //       }
-      //     } else if (req.query.week) {
-      //       if (obj.week == req.query.week) {
-      //         acc[key][0].detail.push(obj)
-      //         acc[key][0].total_qty += obj.qty_buy
-      //         acc[key][0].total_product += 1
-
-      //       }
-      //     } else if (req.query.month) {
-      //       if (obj.month == req.query.month) {
-      //         acc[key][0].detail.push(obj)
-      //         acc[key][0].total_qty += obj.qty_buy
-      //         acc[key][0].total_product += 1
-
-      //       }
-      //     } else {
-      //       acc[key][0].detail.push(obj)
-      //       acc[key][0].total_qty += obj.qty_buy
-      //       acc[key][0].total_product += 1
-      //     }
-
-      //     return acc
-      //   }, {})
-      // }
-
-      // let response = groupBy(detail, req.params.time)
-      // if (Object.keys(req.query).length > 0) {
-      //   response = groupBy(detail, req.params.time)[req.query.name]
-      // }
-      // let response = groupBy(detail, 'day')
-
-      // res.status(200).send(response)
-      res.status(200).send(hasil)
+      })
+      let revenue = [{ total_revenue: 0, total_user: 0, transactions }]
+      
+      revenue[0].total_revenue = transactions.map(item => item.total_price - item.shipping_cost).reduce((a, b) => a + b, 0)
+      revenue[0].total_user = transactions.map(item => item.iduser).filter((item, index, self) => self.indexOf(item) == index).length
+      res.status(200).send(revenue)
     } catch (error) {
       next(error)
     }

@@ -12,6 +12,7 @@ router.post(
   transactionController.perscriptionTransaction
 );
 router.delete("/delete", transactionController.deleteProductCart);
-router.get('/report', authentication, authorization, transactionController.salesReport)
+router.get('/sales-report', authentication, authorization, transactionController.salesReport)
+router.get('/revenue', authentication, authorization, transactionController.revenue)
 
 module.exports = router;
