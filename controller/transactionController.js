@@ -238,7 +238,7 @@ module.exports = {
     } catch (error) {
       console.log(error);
     }
-  },deleteProductCart: async (req, res, next) => {
+  }, deleteProductCart: async (req, res, next) => {
     try {
       let { idproduct, iduser } = req.query;
       console.log(req.query);
@@ -255,4 +255,88 @@ module.exports = {
       next(error);
     }
   },
+  salesReport: async (req, res, next) => {
+    try {
+      let detail = await Transactions.detail()
+      // console.log(detail[0].created_at.toLocaleDateString())
+
+      detail.forEach((item, index) => {
+        let date = item.created_at.toLocaleDateString().split('/')
+        item.created_at = item.created_at.toLocaleDateString()
+        item.updated_at = item.updated_at
+        item.month = parseInt(date[0])
+        item.day = parseInt(date[1])
+        item.year = parseInt(date[2])
+        item.week = Math.floor(date[1] / 7)
+        delete item.updated_at
+        // delete item.created_at
+      })
+
+      let start
+      let end
+      let hasil = detail
+
+      console.log(start)
+      console.log(end)
+
+      if (req.query.start) start = new Date(`${req.query.start} GMT`)
+      if (req.query.end) end = new Date(`${req.query.end} GMT`)
+
+      if (req.query.start && req.query.end) {
+        hasil = detail.filter(item => {
+          let date = new Date(item.created_at)
+          return (date >= start && date <= end)
+        })
+      }
+      // console.log("hasil", hasil)
+      // function groupBy(objectArray, property) {
+      //   return objectArray.reduce(function (acc, obj) {
+      //     let key = obj[property]
+      //     if (!acc[key]) {
+      //       acc[key] = [{ total_qty: 0, total_product: 0, detail: [] }]
+      //     }
+
+      //     if (req.query.day) {
+      //       if (obj.day == req.query.day) {
+      //         acc[key][0].detail.push(obj)
+      //         acc[key][0].total_qty += obj.qty_buy
+      //         acc[key][0].total_product += 1
+
+      //       }
+      //     } else if (req.query.week) {
+      //       if (obj.week == req.query.week) {
+      //         acc[key][0].detail.push(obj)
+      //         acc[key][0].total_qty += obj.qty_buy
+      //         acc[key][0].total_product += 1
+
+      //       }
+      //     } else if (req.query.month) {
+      //       if (obj.month == req.query.month) {
+      //         acc[key][0].detail.push(obj)
+      //         acc[key][0].total_qty += obj.qty_buy
+      //         acc[key][0].total_product += 1
+
+      //       }
+      //     } else {
+      //       acc[key][0].detail.push(obj)
+      //       acc[key][0].total_qty += obj.qty_buy
+      //       acc[key][0].total_product += 1
+      //     }
+
+      //     return acc
+      //   }, {})
+      // }
+
+      // let response = groupBy(detail, req.params.time)
+      // if (Object.keys(req.query).length > 0) {
+      //   response = groupBy(detail, req.params.time)[req.query.name]
+      // }
+      // let response = groupBy(detail, 'day')
+
+      // res.status(200).send(response)
+      res.status(200).send(hasil)
+    } catch (error) {
+      next(error)
+    }
+  }
 };
