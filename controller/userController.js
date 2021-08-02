@@ -627,7 +627,7 @@ module.exports = {
         getSQL = `SELECT a.id,a.tag,a.recipient,a.id_city_origin,a.iduser,c.name,a.address,a.postal_code,a.set_default FROM address a JOIN city c on a.id_city_origin = c.id`;
       }
       getAddress = await dbQuery(getSQL);
-      res.status(200).send(getAddress[0]);
+      res.status(200).send(getAddress);
     } catch (error) {
       next(error);
     }
@@ -832,11 +832,10 @@ module.exports = {
           historyTrans += ` where iduser = ${req.user.iduser}`
         }
       }
-
       history = await dbQuery(historyTrans);
       res.status(200).send(history);
     } catch (err) {
-      next(error);
+      next(err);
     }
   },
   getTransactionDetail: async (req, res, next) => {

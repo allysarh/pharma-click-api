@@ -278,6 +278,22 @@ module.exports = {
   addToCart: async (req, res, next) => {
     try {
       let { iduser, idproduct, qty, total_netto, price, product_name } = req.body;
+      // cartItem = getUserCartItem(iduser, idproduct)
+      // if (cartItem == null) {
+      //   // add new item to cart
+      //   await addItemToCart(iduser, idproduct, qty)
+      // } else {
+      //   // increment cart item quantity
+      //   stock = await getItemStock(idproduct)
+      //   qtyIsAvailable = stock.qty >= qty
+      //   if (!qtyIsAvailable) {
+      //     return 400 - "qty is not enough"
+      //   }
+      //   await updateCartItemQty(iduser, idproduct, cartItem.qty + qty)
+
+      // }
+
+
       getCartSort = await dbQuery(
         `SELECT * FROM cart WHERE iduser=${db.escape(
           iduser
@@ -287,7 +303,7 @@ module.exports = {
       getStock = await dbQuery(
         `SELECT * FROM stock WHERE idproduct=${db.escape(idproduct)} `
       );
-      console.log(req.body)
+      // console.log(req.body)
       if (getCartSort[0] === undefined) {
         let addCart = await dbQuery(
           `INSERT INTO cart VALUES (null,${db.escape(iduser)},${db.escape(
@@ -309,30 +325,6 @@ module.exports = {
                 getCartSort[0].price + price
               )} WHERE idproduct = ${db.escape(idproduct)}`
             );
-
-            if (getCartSort[0] === undefined) {
-              if (getCartSort[0] === undefined) {
-                let addCart = await dbQuery(
-                  `INSERT INTO cart VALUES (null,${db.escape(iduser)},${db.escape(
-                    idproduct
-                  )},${db.escape(qty)},${db.escape(total_netto)},${db.escape(
-                    price
-                  )},now(),now());`
-                );
-                res.status(200).send(`Success add to cart ${product_name}`);
-              } else {
-                if (qty + getCartSort[0].qty <= getStock[0].qty) {
-                  let addCart = await dbQuery(
-                    `INSERT INTO cart VALUES (null,${db.escape(iduser)},${db.escape(
-                      idproduct
-                    )},${db.escape(qty)},${db.escape(total_netto)},${db.escape(
-                      price
-                    )},now(),now());`
-                  );
-                  res.status(200).send(`Success add to cart ${product_name}`);
-                }
-              }
-            }
           }
 
         } else {
