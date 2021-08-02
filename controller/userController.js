@@ -670,8 +670,8 @@ module.exports = {
       // console.log("req user", req.user);
       const upload = uploaderProfile(
         "/profiles",
-        `IMG#PRFL#USR${req.user.iduser}.`
-      ).fields([{ name: "profiles" }]);
+        `IMGUSR${req.user.iduser}.`
+      ).fields([{ name: "images" }]);
       // const upload = uploader("/profile", "IMG").fields([{ name: "images" }]);
       // let { iduser, fullName, gender, phone_number, email, age } = req.body;
       // console.log("requuestnya body", req.body);
@@ -686,7 +686,7 @@ module.exports = {
         } else {
           try {
             var json = JSON.parse(req.body.data);
-            const { profiles } = req.files;
+            const { images } = req.files;
 
 
             let postProduct = `Insert into products values (null,${db.escape(
@@ -702,8 +702,8 @@ module.exports = {
               )}`
             );
 
-            if (profiles !== undefined) {
-              let image_profile = profiles[0].filename;
+            if (images !== undefined) {
+              let image_profile = images[0].filename;
 
               patchUsers = await dbQuery(
                 `UPDATE user SET fullname=${db.escape(
@@ -716,30 +716,29 @@ module.exports = {
                   json.phoneNumber
                 )} WHERE iduser=${db.escape(req.user.iduser)}`
               );
-            } 
-            // else {
-            //   let image_profile = "";
-            //   let getSQL,
-            //     dataSearch = [];
-            //   for (let prop in json) {
-            //     dataSearch.push(`${prop} = ${db.escape(json[prop])}`);
-            //   }
+            } else {
+              let image_profile = "";
+              let getSQL,
+                dataSearch = [];
+              for (let prop in json) {
+                dataSearch.push(`${prop} = ${db.escape(json[prop])}`);
+              }
 
-            //   if (dataSearch.length > 0) {
-            //     getSQL = await dbQuery(
-            //       `UPDATE user SET ${dataSearch.join(
-            //         " , "
-            //       )} WHERE iduser=${db.escape(req.user.iduser)}`
-            //     );
-            //   }
+              if (dataSearch.length > 0) {
+                getSQL = await dbQuery(
+                  `UPDATE user SET ${dataSearch.join(
+                    " , "
+                  )} WHERE iduser=${db.escape(req.user.iduser)}`
+                );
+              }
 
-            //   let { profile_image } = getImage[0];
+              let { profile_image } = getImage[0];
 
-            // }
+            }
           } catch (error) {
             if (req.files.images) {
               await fs.unlinkSync(
-                `./public/profiles/${req.files.images[0].filename}`
+                `./public/profile/${req.files.images[0].filename}`
               );
             }
             next(error);
