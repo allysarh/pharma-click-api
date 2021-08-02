@@ -19,6 +19,8 @@
     "mysql": "^2.18.1",
     "mysql2": "^2.2.5",
     "nodemailer": "^6.6.3",
+    "rajaongkir-nodejs": "^0.2.0",
+    "sharp": "^0.28.3",
     "slick-carousel": "^1.8.1"
   }
 }
