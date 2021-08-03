@@ -16,10 +16,10 @@ class Transaction {
             return error
         }
     }
-    revenue = async (query) =>{
+    revenue = async (start, end) =>{
         try {
             let getTransaction = `select * from transaction`
-            if(query.start && query.end) getTransaction += ``
+            if(start && end) getTransaction += ` where DATE(created_at) between ${db.escape(start)} and ${db.escape(end)}`
             getTransaction = await dbQuery(getTransaction)
             return getTransaction
         } catch (error) {
