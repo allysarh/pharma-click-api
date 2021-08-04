@@ -635,13 +635,27 @@ module.exports = {
   postAddress: async (req, res, next) => {
     try {
       let { tag, recipient, origin, postalCode, address, iduser } = req.body;
-      postAddress = await dbQuery(
+
+      let cekDefault = await dbQuery(`SELECT * FROM address WHERE set_default = 1 AND iduser = ${db.escape(iduser)}`);
+
+      if(cekDefault.length > 0){
+        postAddress = await dbQuery(
         `INSERT INTO address (tag,recipient,iduser,id_city_origin,address,postal_code) VALUES(${db.escape(
           tag
         )},${db.escape(recipient)},${db.escape(iduser)},${db.escape(
           origin
         )},${db.escape(address)},${db.escape(postalCode)})`
       );
+      }else{
+        postAddress = await dbQuery(
+        `INSERT INTO address (tag,recipient,iduser,id_city_origin,address,postal_code,created_at,updated_at,set_default) VALUES(${db.escape(
+          tag
+        )},${db.escape(recipient)},${db.escape(iduser)},${db.escape(
+          origin
+        )},${db.escape(address)},${db.escape(postalCode)},now(),now(),${db.escape(1)})`
+      );
+      }
+
       res.status(200).send({ message: "Success added new address" });
     } catch (error) {
       next(error);
