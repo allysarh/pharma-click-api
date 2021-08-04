@@ -330,7 +330,8 @@ module.exports = {
   },
   revenue: async (req, res, next) => {
     try {
-      let transactions = await Transactions.revenue(req.query)
+      
+      let transactions = await Transactions.revenue(req.query.start, req.query.end)
       transactions.forEach((item) => {
         let date = item.created_at.toLocaleDateString().split('/')
         item.created_at = item.created_at.toLocaleDateString()
@@ -338,15 +339,18 @@ module.exports = {
         item.month = parseInt(date[0])
         item.day = parseInt(date[1])
         item.year = parseInt(date[2])
-        item.week = Math.floor(date[1] / 7)
+        let week = Math.floor(date[1] / 7)
+        item.week = week > 0 ? week : week += 1
         delete item.updated_at
 
       })
-      let revenue = [{ total_revenue: 0, total_user: 0, transactions }]
-
+      let revenue = [{ total_revenue: 0, total_user: 0, total_transactions: 0, transactions }]
+    
+      revenue[0].total_transactions = transactions.length
       revenue[0].total_revenue = transactions.map(item => item.total_price - item.shipping_cost).reduce((a, b) => a + b, 0)
       revenue[0].total_user = transactions.map(item => item.iduser).filter((item, index, self) => self.indexOf(item) == index).length
       res.status(200).send(revenue)
+      // res.status(200).send("OK")
     } catch (error) {
       next(error)
     }

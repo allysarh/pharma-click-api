@@ -80,7 +80,7 @@ module.exports = {
           subject: "[PHARMACLICK User Verification]",
           html: `<div style="text-align: center;">
                         <h1> This is email for verify your account</h1>
-                        <p> Click <a href="http://localhost:3000/verif/${token}">this link</a> and input this otp</p>
+                        <p> Click <a href="http://purwadhikafs3.com:3002/verif/${token}">this link</a> and input this otp</p>
                         <h1>OTP: ${OTP}</h1>
                         </div>`,
         };
@@ -176,7 +176,7 @@ module.exports = {
                                                                               <td align="center" class="esd-block-text es-p5t es-p5b es-p40r es-m-p0r" esd-links-underline="none">
                                                                               <p>Thank you for choosing PHARMACLICK.</p>
                                                                               <p><br></p>
-                                                                              <p>Please confirm that <strong><a target="_blank" href="mailto:${email}" style="text-decoration: none;">${email}</a></strong>&nbsp;is your email address by input OTP on the button below to <a target="_blank" href="http://localhost:3000/verif/${token}" style="text-decoration: none; word-break: break-all;">this link</a> within <strong>48 hours</strong>.</p>
+                                                                              <p>Please confirm that <strong><a target="_blank" href="mailto:${email}" style="text-decoration: none;">${email}</a></strong>&nbsp;is your email address by input OTP on the button below to <a target="_blank" href="http://purwadhikafs3.com:3002/verif/${token}" style="text-decoration: none; word-break: break-all;">this link</a> within <strong>48 hours</strong>.</p>
                                                                               </td>
                                                                               </tr>
                                                                               <tr>
@@ -545,7 +545,7 @@ module.exports = {
                                                                         <td align="center" class="esd-block-text es-p5t es-p5b es-p40r es-m-p0r" esd-links-underline="none">
                                                                             <p>Thank you for choosing PHARMACLICK.</p>
                                                                             <p><br></p>
-                                                                            <p>To reset pasword, please click<strong><a target="_blank" href="mailto:${email}" style="text-decoration: none;">${email}</a></strong>&nbsp;is your email address by input OTP on the button below to <a target="_blank" href="http://localhost:3000/reset/${token}" style="text-decoration: none; word-break: break-all;">this link</a> within <strong>12 hours</strong> or click button below.</p>
+                                                                            <p>To reset pasword, please click<strong><a target="_blank" href="mailto:${email}" style="text-decoration: none;">${email}</a></strong>&nbsp;is your email address by input OTP on the button below to <a target="_blank" href="http://purwadhikafs3.com:3002/reset/${token}" style="text-decoration: none; word-break: break-all;">this link</a> within <strong>12 hours</strong> or click button below.</p>
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
@@ -561,7 +561,7 @@ module.exports = {
                                                                     </tr>
                                                                     <tr>
                                                                     <td align="center">
-                                                                        <a href="http://localhost:3000/reset/${token}">
+                                                                        <a href="http://purwadhikafs3.com:3002/reset/${token}">
                                                                             <button>
                                                                                 <h4>Reset password</h4>
                                                                             </button>
