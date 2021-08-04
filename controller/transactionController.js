@@ -2,6 +2,11 @@ const { uploader } = require("../config");
 const { dbQuery, db } = require("../config/database");
 const fs = require("fs");
 const fs1 = require("fs").promises;
+const Transactions = require("../service/transactionsService");
+const { parse } = require("dotenv");
+const { detail } = require("../service/transactionsService");
+const { nextTick } = require("process");
+
 var RajaOngkir = require("rajaongkir-nodejs").Starter(
   "8b59fc64454aba0cbdc1fcc8a03daf39"
 );
@@ -21,12 +26,12 @@ module.exports = {
       // console.log(params.origin, params.destination, params.weight, "shipping");
       let result = await RajaOngkir.getJNECost(params)
       let cost = [];
-          result.rajaongkir.results.map((item) => {
-            item.costs.map((item) => {
-              cost.push({ cost: item });
-            });
-          });
-          res.status(200).send(cost);
+      result.rajaongkir.results.map((item) => {
+        item.costs.map((item) => {
+          cost.push({ cost: item });
+        });
+      });
+      res.status(200).send(cost);
     } catch (error) {
       next(error);
     }
@@ -127,8 +132,8 @@ module.exports = {
           address: address,
           recipient: recipient,
           postal_code: postal_code,
-          expedition:expedition,
-          service:service,
+          expedition: expedition,
+          service: service,
           shipping_cost: shipping_cost,
           total_price: total_price,
           note: note,
@@ -242,8 +247,7 @@ module.exports = {
     } catch (error) {
       console.log(error);
     }
-  }
-  ,deleteProductCart: async (req, res, next) => {
+  }, deleteProductCart: async (req, res, next) => {
     try {
       let { idproduct, iduser } = req.query;
       console.log(req.query);
@@ -260,9 +264,9 @@ module.exports = {
       next(error);
     }
   },
-  getTransaction:async(req,res,next)=>{
+  getTransaction: async (req, res, next) => {
     try {
-      let transactionSQL,transactions,
+      let transactionSQL, transactions,
         dataSearch = [];
       for (let prop in req.params) {
         dataSearch.push(`${prop} = ${db.escape(req.params[prop])}`);
@@ -272,7 +276,7 @@ module.exports = {
         transactionSQL = await dbQuery(`SELECT * FROM transaction where ${dataSearch.join(
           " AND "
         )}`)
-      }else{
+      } else {
         transactionSQL = await dbQuery(`SELECT * FROM transaction `)
       }
       res.status(200).send(transactionSQL)
@@ -280,33 +284,93 @@ module.exports = {
       next(error)
     }
   },
-  acceptTransaction:async(req,res,next) => {
+  salesReport: async (req, res, next) => {
     try {
-      let {id} = req.params
-      let {iduser} = req.user
-      console.log(req.user)
-      console.log(req.params)
-    if(req.user.role === "admin"){
-      acceptSQL = await dbQuery(`UPDATE transaction SET id_transaction_status = 1 WHERE id=${db.escape(id)}`)
-    }
-      res.status(200).send({message:"success aceppt transaction"})
+      let getDetail = await Transactions.detail(req.query)
+
+      getDetail.forEach((item, index) => {
+        let date = item.created_at.toLocaleDateString().split('/')
+        item.created_at = item.created_at.toLocaleDateString()
+        item.updated_at = item.updated_at
+        item.month = parseInt(date[0])
+        item.day = parseInt(date[1])
+        item.year = parseInt(date[2])
+        let week = Math.floor(date[1] / 7)
+        item.week = week > 0 ? week : week += 1
+        delete item.updated_at
+      })
+
+      let response = [{ total_product: 0, total_qty: 0, detail: [] }]
+      response[0].detail = getDetail
+      total_qty = getDetail.reduce((a, b) => a + b.qty_buy, 0)
+
+      let total_product = getDetail.map(item => item.product_name).filter((item, index, self) => self.indexOf(item) == index).length
+      response[0].total_qty = total_qty
+      response[0].total_product = total_product
+
+
+      res.status(200).send(response)
     } catch (error) {
       next(error)
     }
   },
-  rejectTransaction:async(req,res,next) => {
+  acceptTransaction: async (req, res, next) => {
     try {
-      let {id} = req.params
-      let {iduser} = req.user
+      let { id } = req.params
+      let { iduser } = req.user
       console.log(req.user)
       console.log(req.params)
-    if(req.user.role === "admin"){
-      acceptSQL = await dbQuery(`UPDATE transaction SET id_transaction_status = 3 WHERE id=${db.escape(id)}`)
-    }
-      res.status(200).send({message:"success reject transaction"})
+      if (req.user.role === "admin") {
+        acceptSQL = await dbQuery(`UPDATE transaction SET id_transaction_status = 1 WHERE id=${db.escape(id)}`)
+      }
+      res.status(200).send({ message: "success aceppt transaction" })
     } catch (error) {
       next(error)
     }
-    
+  },
+  revenue: async (req, res, next) => {
+    try {
+      let transactions = await Transactions.revenue(req.query)
+      transactions.forEach((item) => {
+        let date = item.created_at.toLocaleDateString().split('/')
+        item.created_at = item.created_at.toLocaleDateString()
+        item.updated_at = item.updated_at
+        item.month = parseInt(date[0])
+        item.day = parseInt(date[1])
+        item.year = parseInt(date[2])
+        item.week = Math.floor(date[1] / 7)
+        delete item.updated_at
+
+      })
+      let revenue = [{ total_revenue: 0, total_user: 0, transactions }]
+
+      revenue[0].total_revenue = transactions.map(item => item.total_price - item.shipping_cost).reduce((a, b) => a + b, 0)
+      revenue[0].total_user = transactions.map(item => item.iduser).filter((item, index, self) => self.indexOf(item) == index).length
+      res.status(200).send(revenue)
+    } catch (error) {
+      next(error)
+    }
+  },
+  rejectTransaction: async (req, res, next) => {
+    try {
+      let { id } = req.params
+      let { iduser } = req.user
+      console.log(req.user)
+      console.log(req.params)
+      if (req.user.role === "admin") {
+        acceptSQL = await dbQuery(`UPDATE transaction SET id_transaction_status = 3 WHERE id=${db.escape(id)}`)
+      }
+      res.status(200).send({ message: "success reject transaction" })
+    } catch (error) {
+      next(error)
+    }
+  },
+  productSales: async (req, res, next) => {
+    try {
+      let productSales = await Transactions.productSales()
+      res.status(200).send(productSales)
+    } catch (error) {
+      nextTick(error)
+    }
   }
 }
