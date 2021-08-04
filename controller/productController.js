@@ -563,5 +563,14 @@ module.exports = {
     } catch (error) {
       next(error)
     }
+  },
+  addReviews: async (req, res, next) => {
+    try {
+      await productService.addReviews(req.user.iduser, req.body)
+      await productService.updateReview(req.user.iduser, req.body)
+      res.status(200).send({ status: 200, message: 'Add Review Success!' })
+    } catch (error) {
+      console.log(error)
+    }
   }
 };
