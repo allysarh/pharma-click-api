@@ -556,12 +556,26 @@ module.exports = {
   },
   getReviews: async (req, res, next) => {
     try {
-      let { product } = req.query
-      let idproduct = product.split('-')[product.split('-').length - 1]
+      let idproduct
+      if(req.query.product){
+        let { product } = req.query
+        idproduct = product.split('-')[product.split('-').length - 1]
+      } else {
+        idproduct = 0
+      }
       dataReview = await productService.getReviews(idproduct)
       res.status(200).send(dataReview)
     } catch (error) {
       next(error)
+    }
+  },
+  addReviews: async (req, res, next) =>{
+    try {
+      await productService.addReviews(req.user.iduser, req.body)
+      await productService.updateReview(req.user.iduser, req.body)
+      res.status(200).send({status: 200, message: 'Add Review Success!'})
+    } catch (error) {
+      console.log(error)
     }
   }
 };

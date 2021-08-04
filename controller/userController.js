@@ -80,7 +80,7 @@ module.exports = {
           subject: "[PHARMACLICK User Verification]",
           html: `<div style="text-align: center;">
                         <h1> This is email for verify your account</h1>
-                        <p> Click <a href="http://purwadhikafs3.com:3002/verif/${token}">this link</a> and input this otp</p>
+                        <p> Click <a href="${process.env.URL}/verif/${token}">this link</a> and input this otp</p>
                         <h1>OTP: ${OTP}</h1>
                         </div>`,
         };
@@ -176,7 +176,7 @@ module.exports = {
                                                                               <td align="center" class="esd-block-text es-p5t es-p5b es-p40r es-m-p0r" esd-links-underline="none">
                                                                               <p>Thank you for choosing PHARMACLICK.</p>
                                                                               <p><br></p>
-                                                                              <p>Please confirm that <strong><a target="_blank" href="mailto:${email}" style="text-decoration: none;">${email}</a></strong>&nbsp;is your email address by input OTP on the button below to <a target="_blank" href="http://purwadhikafs3.com:3002/verif/${token}" style="text-decoration: none; word-break: break-all;">this link</a> within <strong>48 hours</strong>.</p>
+                                                                              <p>Please confirm that <strong><a target="_blank" href="mailto:${email}" style="text-decoration: none;">${email}</a></strong>&nbsp;is your email address by input OTP on the button below to <a target="_blank" href="${process.env.URL}/verif/${token}" style="text-decoration: none; word-break: break-all;">this link</a> within <strong>48 hours</strong>.</p>
                                                                               </td>
                                                                               </tr>
                                                                               <tr>
@@ -421,7 +421,7 @@ module.exports = {
       }
 
       if (Object.keys(req.query).length > 0) {
-        getUser = `SELECT iduser, fullname, gender, age, username, email, role, status, profile_image, otp 
+        getUser = `SELECT iduser, fullname, gender, age, username, email, role, status, profile_image, otp, created_at, updated_at 
                 from user as u
                 LEFT join role as r
                 on r.idrole = u.idrole
@@ -429,7 +429,7 @@ module.exports = {
                 on s.idstatus = u.idstatus WHERE ${userSearch.join(" AND ")};`;
         //console.log(getUser);
       } else {
-        getUser = `SELECT iduser, fullname, gender, age, username, email, role, status, profile_image, otp 
+        getUser = `SELECT iduser, fullname, gender, age, username, email, role, status, profile_image, otp, created_at, updated_at  
                 from user as u
                 LEFT join role as r
                 on r.idrole = u.idrole
@@ -545,7 +545,7 @@ module.exports = {
                                                                         <td align="center" class="esd-block-text es-p5t es-p5b es-p40r es-m-p0r" esd-links-underline="none">
                                                                             <p>Thank you for choosing PHARMACLICK.</p>
                                                                             <p><br></p>
-                                                                            <p>To reset pasword, please click<strong><a target="_blank" href="mailto:${email}" style="text-decoration: none;">${email}</a></strong>&nbsp;is your email address by input OTP on the button below to <a target="_blank" href="http://purwadhikafs3.com:3002/reset/${token}" style="text-decoration: none; word-break: break-all;">this link</a> within <strong>12 hours</strong> or click button below.</p>
+                                                                            <p>To reset pasword, please click<strong><a target="_blank" href="mailto:${email}" style="text-decoration: none;">${email}</a></strong>&nbsp;is your email address by input OTP on the button below to <a target="_blank" href="${process.env.URL}/reset/${token}" style="text-decoration: none; word-break: break-all;">this link</a> within <strong>12 hours</strong> or click button below.</p>
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
@@ -561,7 +561,7 @@ module.exports = {
                                                                     </tr>
                                                                     <tr>
                                                                     <td align="center">
-                                                                        <a href="http://purwadhikafs3.com:3002/reset/${token}">
+                                                                        <a href="${process.env.URL}/reset/${token}">
                                                                             <button>
                                                                                 <h4>Reset password</h4>
                                                                             </button>
@@ -826,7 +826,7 @@ module.exports = {
 
       if (dataSearch.length > 0) {
         let { idtype } = req.params;
-        historyTrans = `SELECT t.id, t.iduser as iduser, t.invoice,c.name as origin, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note FROM transaction t 
+        historyTrans = `SELECT t.id, t.iduser as iduser, t.invoice,c.name as origin, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note, t.review FROM transaction t 
         join user u on u.iduser=t.iduser 
         join transaction_status ts on t.id_transaction_status=ts.id 
         join city c on t.id_city_origin = c.id 
