@@ -392,31 +392,6 @@ module.exports = {
       getAddress.forEach((val, i) => {
         address.push(val);
       });
-
-      if (req.user.profile_image) {
-        let mims = mime.contentType(profile_image);
-        //console.log("mimimime pri", mims);
-        const contents = await fs1.readFile(profile_image, {
-          encoding: "base64",
-        });
-        let image = `data:${mims};base64,${contents}`;
-        res.status(200).send({
-          iduser,
-          fullname,
-          gender,
-          age,
-          username,
-          email,
-          role,
-          status,
-          profile_image,
-          cart,
-          address,
-          phone_number,
-          token,
-          image,
-        });
-      } else {
         res.status(200).send({
           iduser,
           fullname,
@@ -432,7 +407,6 @@ module.exports = {
           phone_number,
           token,
         });
-      }
     } catch (error) {
       next(error);
     }
@@ -653,7 +627,7 @@ module.exports = {
         getSQL = `SELECT a.id,a.tag,a.recipient,a.id_city_origin,a.iduser,c.name,a.address,a.postal_code,a.set_default FROM address a JOIN city c on a.id_city_origin = c.id`;
       }
       getAddress = await dbQuery(getSQL);
-      res.status(200).send(getAddress[0]);
+      res.status(200).send(getAddress);
     } catch (error) {
       next(error);
     }
@@ -695,8 +669,8 @@ module.exports = {
     try {
       // console.log("req user", req.user);
       const upload = uploaderProfile(
-        "/profile",
-        `IMG#PRFL#USR${req.user.iduser}.`
+        "/profiles",
+        `IMGUSR${req.user.iduser}.`
       ).fields([{ name: "images" }]);
       // const upload = uploader("/profile", "IMG").fields([{ name: "images" }]);
       // let { iduser, fullName, gender, phone_number, email, age } = req.body;
@@ -729,7 +703,7 @@ module.exports = {
             );
 
             if (images !== undefined) {
-              let image_profile = images[0].path;
+              let image_profile = images[0].filename;
 
               patchUsers = await dbQuery(
                 `UPDATE user SET fullname=${db.escape(
@@ -737,7 +711,7 @@ module.exports = {
                 )},gender=${db.escape(json.gender)},age=${db.escape(
                   json.age
                 )},email=${db.escape(json.email)},profile_image=${db.escape(
-                  image_profile
+                  `profiles/${image_profile}`
                 )},age=${db.escape(json.age)},phone_number=${db.escape(
                   json.phoneNumber
                 )} WHERE iduser=${db.escape(req.user.iduser)}`
@@ -776,49 +750,39 @@ module.exports = {
       next(error);
     }
   },
-  getImageUser: async (req, res, next) => {
-    // getImage = await dbQuery(`select profile_image from user`);
-    // console.log("image get", getImage);
-    try {
-      let getSQL,
-        dataSearch = [];
-      for (let prop in req.query) {
-        dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
-      }
+  // getImageUser: async (req, res, next) => {
+  //   // getImage = await dbQuery(`select profile_image from user`);
+  //   // console.log("image get", getImage);
+  //   try {
+  //     let getSQL,
+  //       dataSearch = [];
+  //     for (let prop in req.query) {
+  //       dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
+  //     }
 
-      if (dataSearch.length > 0) {
-        getSQL = `SELECT profile_image from user WHERE ${dataSearch.join(
-          " AND "
-        )}`;
-      } else {
-        getSQL = `SELECT profile_image from user`;
-      }
+  //     if (dataSearch.length > 0) {
+  //       getSQL = `SELECT profile_image from user WHERE ${dataSearch.join(
+  //         " AND "
+  //       )}`;
+  //     } else {
+  //       getSQL = `SELECT profile_image from user`;
+  //     }
 
-      getProfileImage = await dbQuery(getSQL);
+  //     getProfileImage = await dbQuery(getSQL);
 
-      // console.log("waw", getProfileImage[0].profile_image);
-
-
-
-
-      if (getProfileImage.length) {
-        let { profile_image } = getProfileImage[0];
-        if (fs.existsSync(profile_image)) {
-          const contents = await fs1.readFile(profile_image, {
-            encoding: "base64",
-          });
-          let mims = mime.contentType(profile_image);
-          let image = `data:${mims};base64,${contents}`;
-          res.status(200).send({ image_path: profile_image, image_url: image });
-        }
-      } else {
-        res.status(200).send({ message: "image not found" });
-      }
-    } catch (error) {
-      next(error);
-    }
-  },
-
+  //     // console.log("waw", getProfileImage[0].profile_image);
+  //     if (getProfileImage.length) {
+  //       // let { profile_image } = getProfileImage[0];
+  //       if (fs.existsSync(profile_image)) {
+  //         res.status(200).send({ image_path: profile_image, image_url: image });
+  //       }
+  //     } else {
+  //       res.status(200).send({ message: "image not found" });
+  //     }
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // },
   resetPassword: async (req, res, next) => {
     try {
       console.log(req.user);
@@ -868,11 +832,10 @@ module.exports = {
           historyTrans += ` where iduser = ${req.user.iduser}`
         }
       }
-
       history = await dbQuery(historyTrans);
       res.status(200).send(history);
     } catch (err) {
-      next(error);
+      next(err);
     }
   },
   getTransactionDetail: async (req, res, next) => {

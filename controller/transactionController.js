@@ -19,19 +19,14 @@ module.exports = {
       };
 
       // console.log(params.origin, params.destination, params.weight, "shipping");
-      await RajaOngkir.getJNECost(params)
-        .then(function (result) {
-          let cost = [];
+      let result = await RajaOngkir.getJNECost(params)
+      let cost = [];
           result.rajaongkir.results.map((item) => {
             item.costs.map((item) => {
               cost.push({ cost: item });
             });
           });
           res.status(200).send(cost);
-        })
-        .catch(function (error) {
-          console.log(error);
-        });
     } catch (error) {
       next(error);
     }
@@ -49,6 +44,8 @@ module.exports = {
         address,
         recipient,
         postal_code,
+        expedition,
+        service,
         shipping_cost,
         total_price,
         note,
@@ -130,6 +127,8 @@ module.exports = {
           address: address,
           recipient: recipient,
           postal_code: postal_code,
+          expedition:expedition,
+          service:service,
           shipping_cost: shipping_cost,
           total_price: total_price,
           note: note,
@@ -179,6 +178,8 @@ module.exports = {
         address,
         recipient,
         postal_code,
+        expedition,
+        service,
         shipping_cost,
         total_price,
         note,
@@ -199,12 +200,13 @@ module.exports = {
         try {
           var json = JSON.parse(req.body.data);
           const { images } = req.files;
+
+          console.log("req body data", json);
           // console.log(images);
-          console.log("req body data", req.body);
           //console.log("cek file upload :", images);
 
           if (images !== undefined) {
-            let image_profile = images[0].path;
+            let image_profile = images[0].filename;
             let postTransaction = `INSERT INTO transaction SET ?`;
             let transactionPerscription = await dbQuery(postTransaction, {
               iduser: iduser,
@@ -215,11 +217,13 @@ module.exports = {
               address: json.address,
               recipient: json.recipient,
               postal_code: json.postal_code,
+              expedition: json.expedition,
+              service: json.service,
               shipping_cost: json.shipping_cost,
               total_price: json.total_price,
               note: json.note,
               idtype: json.idtype,
-              img_order_url: image_profile,
+              img_order_url: `perscription/${image_profile}`,
             });
           }
         } catch (error) {
@@ -238,7 +242,8 @@ module.exports = {
     } catch (error) {
       console.log(error);
     }
-  },deleteProductCart: async (req, res, next) => {
+  }
+  ,deleteProductCart: async (req, res, next) => {
     try {
       let { idproduct, iduser } = req.query;
       console.log(req.query);
@@ -255,4 +260,53 @@ module.exports = {
       next(error);
     }
   },
-};
+  getTransaction:async(req,res,next)=>{
+    try {
+      let transactionSQL,transactions,
+        dataSearch = [];
+      for (let prop in req.params) {
+        dataSearch.push(`${prop} = ${db.escape(req.params[prop])}`);
+      }
+
+      if (dataSearch.length > 0) {
+        transactionSQL = await dbQuery(`SELECT * FROM transaction where ${dataSearch.join(
+          " AND "
+        )}`)
+      }else{
+        transactionSQL = await dbQuery(`SELECT * FROM transaction `)
+      }
+      res.status(200).send(transactionSQL)
+    } catch (error) {
+      next(error)
+    }
+  },
+  acceptTransaction:async(req,res,next) => {
+    try {
+      let {id} = req.params
+      let {iduser} = req.user
+      console.log(req.user)
+      console.log(req.params)
+    if(req.user.role === "admin"){
+      acceptSQL = await dbQuery(`UPDATE transaction SET id_transaction_status = 1 WHERE id=${db.escape(id)}`)
+    }
+      res.status(200).send({message:"success aceppt transaction"})
+    } catch (error) {
+      next(error)
+    }
+  },
+  rejectTransaction:async(req,res,next) => {
+    try {
+      let {id} = req.params
+      let {iduser} = req.user
+      console.log(req.user)
+      console.log(req.params)
+    if(req.user.role === "admin"){
+      acceptSQL = await dbQuery(`UPDATE transaction SET id_transaction_status = 3 WHERE id=${db.escape(id)}`)
+    }
+      res.status(200).send({message:"success reject transaction"})
+    } catch (error) {
+      next(error)
+    }
+    
+  }
+}

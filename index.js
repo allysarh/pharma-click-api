@@ -33,7 +33,8 @@ db.getConnection((err, connection) => {
 
 // error handling
 app.use((error, req, res, next, detail) => {
-  res.status(500).send({ status: 500, message: error, source: detail });
+  let message = error.message || error
+  res.status(500).json({ status: 500, message, source: detail });
 });
 
 app.listen(PORT, () => console.log("Server running at", PORT));
