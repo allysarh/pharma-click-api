@@ -12,4 +12,16 @@ module.exports = {
     console.log(dataReview);
     return dbQuery(dataReview);
   },
+  addReviews: (iduser, body) =>{
+    let values = []
+    body.forEach((item, index) =>{
+      values.push(`(${iduser}, ${db.escape(item.idproduct)}, ${db.escape(item.rating)}, ${db.escape(item.review)})`)
+    })
+    let addReview = `INSERT INTO review (iduser, idproduct, rating, review) values ${values.join(',')} `
+    return dbQuery(addReview)
+  },
+  updateReview: (iduser, body) =>{
+    let updateTrans = `UPDATE transaction set review = '1' where id = ${body[0].idtransaction};`
+    return dbQuery(updateTrans)
+  }
 };
