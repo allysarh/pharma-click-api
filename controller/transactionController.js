@@ -141,6 +141,7 @@ module.exports = {
             idtransaction: transaction.insertId,
             qty_buy: item.qty_product,
             netto: item.netto,
+            total_netto: item.netto*item.qty_product,
           });
         });
         idproduct.map((item) => {
@@ -148,7 +149,7 @@ module.exports = {
             `UPDATE stock SET qty= qty-${db.escape(
               item.qty_product
             )},total_netto=total_netto-${db.escape(
-              item.total_netto
+              item.netto*item.qty_product
             )} WHERE idproduct=${db.escape(item.idproduct)}`
           );
         });

@@ -13,7 +13,6 @@ module.exports = {
     try {
 
       let getProduct = productService.getProduct(req.params.idtype)
-
       if (Object.keys(req.query).length > 0) {
         let searchQuery = []
         let sortQuery = []
@@ -176,7 +175,7 @@ module.exports = {
           let addStock = `INSERT into stock values (null, ${addProduct.insertId
             }, 2, ${db.escape(stock[0].qty)}, ${db.escape(
               stock[0].total_netto
-            )}, null, 1);`;
+            )}, ${db.escape(pack_price/netto)}, 1);`;
           await dbQuery(addStock);
 
           res
@@ -374,7 +373,7 @@ module.exports = {
             stock[0].qty
           )}, total_netto = ${db.escape(
             total_netto
-          )}, idstatus = 1 where id = ${db.escape(stock[0].id)};`;
+          )}, unit_price = ${db.escpe(pack_price/netto)}, idstatus = 1 where id = ${db.escape(stock[0].id)};`;
 
           await dbQuery(editStock);
 

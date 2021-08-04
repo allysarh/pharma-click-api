@@ -821,12 +821,19 @@ module.exports = {
       let historyTrans,
         dataSearch = [];
       for (let prop in req.query) {
-        dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
+        if (prop.includes("id")) {
+          let a = prop;
+          const b = ["id"];
+          a = a.replace(new RegExp(b.join("|"), "g"), "t.id");
+          dataSearch.push(`${a} = ${db.escape(req.query[prop])}`);
+        } else {
+          dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
+        }
       }
 
       if (dataSearch.length > 0) {
         let { idtype } = req.params;
-        historyTrans = `SELECT t.id, t.iduser as iduser, t.invoice,c.name as origin, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note FROM transaction t 
+        historyTrans = `SELECT t.id, t.iduser as iduser, t.invoice,c.name as origin, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note,t.img_order_url,t.id_city_origin,t.id_city_destination FROM transaction t 
         join user u on u.iduser=t.iduser 
         join transaction_status ts on t.id_transaction_status=ts.id 
         join city c on t.id_city_origin = c.id 
@@ -837,10 +844,10 @@ module.exports = {
           historyTrans += ` and t.iduser = ${req.user.iduser}`
         }
       } else {
-        historyTrans = `SELECT t.id, t.iduser as iduser, t.invoice,c.name as origin, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note FROM transaction t 
+        historyTrans = `SELECT t.id, t.iduser as iduser, t.invoice,c.name as destination, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note,t.img_order_url,t.id_city_origin,t.id_city_destination  FROM transaction t 
         join user u on u.iduser=t.iduser 
         join transaction_status ts on t.id_transaction_status=ts.id 
-        join city c on t.id_city_origin = c.id 
+        join city c on t.id_city_destination = c.id 
         join city ct on ct.id = t.id_city_destination`;
         if (req.user.role == "user") {
           historyTrans += ` where iduser = ${req.user.iduser}`
