@@ -421,7 +421,7 @@ module.exports = {
       }
 
       if (Object.keys(req.query).length > 0) {
-        getUser = `SELECT iduser, fullname, gender, age, username, email, role, status, profile_image, otp 
+        getUser = `SELECT iduser, fullname, gender, age, username, email, role, status, profile_image, otp, created_at, updated_at
                 from user as u
                 LEFT join role as r
                 on r.idrole = u.idrole
@@ -429,7 +429,7 @@ module.exports = {
                 on s.idstatus = u.idstatus WHERE ${userSearch.join(" AND ")};`;
         //console.log(getUser);
       } else {
-        getUser = `SELECT iduser, fullname, gender, age, username, email, role, status, profile_image, otp 
+        getUser = `SELECT iduser, fullname, gender, age, username, email, role, status, profile_image, otp, created_at, updated_at
                 from user as u
                 LEFT join role as r
                 on r.idrole = u.idrole
