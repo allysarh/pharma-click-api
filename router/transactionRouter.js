@@ -5,6 +5,7 @@ const { transactionController } = require("../controller");
 
 router.post("/shipping-cost", transactionController.shippingCost);
 router.post("/checkout", readToken, transactionController.checkoutTransactions);
+router.post("/perscription", readToken, transactionController.servePerscription);
 router.post(
   "/checkout-perscription",
   readToken,

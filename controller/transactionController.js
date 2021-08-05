@@ -309,5 +309,104 @@ module.exports = {
       next(error)
     }
     
+  },
+  servePerscription:async(req,res,next) =>{
+    try {
+      console.log(req.user)
+      let {idtransaction,products,destination,postalCode,recipient,note,address,expedition,service,shippingCost} = req.body
+    //CHECK STOCK BEFORE CONTINUE BUYING
+    let id = [];
+    let qty = [];
+    products.map((item) => {
+      // console.log("product", item);
+      return id.push({ idproduct: item.idproduct });
+    });
+
+    products.map((item) => {
+      return qty.push({
+        total_netto: item.total_netto,
+        idproduct: item.idproduct,
+      });
+    });
+
+    let qtyStock,
+      dataSearch = [];
+
+    id.map((item) => {
+      for (let prop in item) {
+        dataSearch.push(`${prop} = ${db.escape(item[prop])}`);
+      }
+    });
+
+    if (dataSearch.length > 0) {
+      qtyStock = `SELECT * FROM stock WHERE ${dataSearch.join(" OR ")}`;
+    }
+    let stockQty = await dbQuery(qtyStock);
+
+    let checked = [];
+
+    stockQty.map((item, idx) => {
+      return qty.map((val) => {
+        if (item.idproduct === val.idproduct) {
+          if (item.total_netto >= val.total_netto) {
+            checked.push({ id: val.idproduct });
+          }
+        }
+      });
+    });
+    // console.log(checked);
+    // console.log(stockQty.length);
+
+    if (checked.length !== stockQty.length) {
+      let sqlProduct,
+        dataSearch = [];
+
+      checked.map((item) => {
+        for (let prop in item) {
+          dataSearch.push(`${prop} = ${db.escape(item[prop])}`);
+        }
+      });
+
+      if (dataSearch.length > 0) {
+        sqlProduct = `SELECT product_name from product WHERE ${dataSearch.join(
+          " AND "
+        )}`;
+      }
+      let unavailableProducts = await dbQuery(sqlProduct);
+      res.status(200).send({
+        message: `${unavailableProducts[0].product_name} not enough stock`,
+      });
+    }else {
+      let postTransaction = `UPDATE transaction SET ?`; 
+      let transaction = await dbQuery(postTransaction, {
+        shipping_cost: shippingCost,
+        id_transaction_status: 6,
+        total_price: products.reduce(
+          (a, v) => (a = a + v.unit_price + parseInt(shippingCost)),0),
+      });
+      let sql = `INSERT INTO transaction_detail SET ?`;
+      products.map((item) => {
+        let transactions = dbQuery(sql, {
+          idproduct: item.idproduct,
+          idtransaction: idtransaction,
+          qty_buy: Math.ceil(Math.abs(item.total_netto/item.netto)),
+          netto: item.netto,
+          total_netto: item.total_netto,
+        });
+      });
+
+      products.map((item) => {
+        let updateStock = dbQuery(
+          `UPDATE stock SET total_netto=total_netto-${db.escape(
+            item.total_netto
+          )} WHERE idproduct=${db.escape(item.idproduct)}`
+        );
+      });
+      res.status(200).send({ message: "success serve perscription" });
+    }
+    } catch (error) {
+      next(error)
+    }
   }
+
 }
