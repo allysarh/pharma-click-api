@@ -15,7 +15,7 @@ router.delete("/delete", transactionController.deleteProductCart);
 router.get("/bill", transactionController.getTransaction);
 router.patch("/accept/:id", readToken,transactionController.acceptTransaction);
 router.patch("/reject/:id", readToken,transactionController.rejectTransaction);
-router.get('/sales-report', authentication, authorization, transactionController.salesReport)
+router.get('/sales-report', authorization, transactionController.salesReport)
 router.get('/revenue', authentication, authorization, transactionController.revenue)
 router.get('/product-sales', authentication, authorization, transactionController.productSales)
 

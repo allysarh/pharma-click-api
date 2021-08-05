@@ -26,6 +26,8 @@ module.exports = {
       // console.log(params.origin, params.destination, params.weight, "shipping");
       let result = await RajaOngkir.getJNECost(params)
       let cost = [];
+      console.log(result)
+      // return results
       result.rajaongkir.results.map((item) => {
         item.costs.map((item) => {
           cost.push({ cost: item });
@@ -330,7 +332,7 @@ module.exports = {
   },
   revenue: async (req, res, next) => {
     try {
-      
+
       let transactions = await Transactions.revenue(req.query.start, req.query.end)
       transactions.forEach((item) => {
         let date = item.created_at.toLocaleDateString().split('/')
@@ -345,7 +347,7 @@ module.exports = {
 
       })
       let revenue = [{ total_revenue: 0, total_user: 0, total_transactions: 0, transactions }]
-    
+
       revenue[0].total_transactions = transactions.length
       revenue[0].total_revenue = transactions.map(item => item.total_price - item.shipping_cost).reduce((a, b) => a + b, 0)
       revenue[0].total_user = transactions.map(item => item.iduser).filter((item, index, self) => self.indexOf(item) == index).length

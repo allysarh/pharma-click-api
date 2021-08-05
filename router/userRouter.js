@@ -2,6 +2,7 @@ const express = require("express");
 const { readToken } = require("../config");
 const router = express.Router();
 const { userController } = require("../controller");
+const { authorization } = require('./auth')
 
 router.post("/verif", readToken, userController.accVerif);
 router.post("/re-verif", userController.reVerif);
@@ -26,5 +27,5 @@ router.patch("/patch-user", readToken, userController.patchUser);
 // router.get("/get-image-user", userController.getImageUser);
 router.patch("/set-default", userController.setDefault);
 router.get("/get-city", userController.getCity);
-
+router.get('/transfer-proof/:idtransaction', authorization, userController.getTransactionProof)
 module.exports = router;
