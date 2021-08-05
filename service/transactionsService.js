@@ -37,24 +37,24 @@ class Transaction {
             where s.idstatus = 1;`
             product = await dbQuery(product)
 
-            let orders = `select t.id as idtransaction, t.invoice, t.iduser, fullname, td.idproduct as idproduct, t.created_at, td.netto, ts.name as transaction_status, td.qty_buy as qty from transaction t 
+            let orders = `select t.id as idtransaction, t.invoice, ty.name as type, t.iduser, fullname, td.idproduct as idproduct, t.created_at, total_netto, ts.name as transaction_status, td.qty_buy as qty from transaction t 
             left join transaction_detail td on t.id = td.id
             left join user u on u.iduser = t.iduser
-            left join transaction_status ts on ts.id = t.id_transaction_status;`
+            left join transaction_status ts on ts.id = t.id_transaction_status
+            left join type ty on ty.id = idtype;`
 
             orders = await dbQuery(orders)
-
+            let cos = []
             product.forEach((item, index) =>{
                 item.orders = []
                 orders.forEach((val) =>{
-                    if(item.id == val.idproduct){
+                    if(item.id == val.idproduct && item.type == val.type){
                         val.created_at = val.created_at.toLocaleDateString()
-                        val.total_netto = val.qty * val.netto
+                        // val.total_netto = val.qty * val.netto
                         item.orders.push(val)
                     }
                 })
             })
-            
             return product
         } catch (error) {
             return error
