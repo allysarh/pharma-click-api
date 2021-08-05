@@ -3,9 +3,10 @@ const { dbQuery, db } = require("../config/database")
 class Transaction {
     detail = async (query) => {
         try {
-            let getDetail = `select td.id as idtransaction, iduser, idproduct, product_name, qty_buy, td.created_at, td.updated_at from transaction_detail td 
+            let getDetail = ` select td.id as idtransaction, iduser, idproduct, product_name, qty_buy, td.created_at, td.updated_at, ts.name as status from transaction_detail td 
             join product p on td.idproduct = p.id
-            join transaction t on td.idtransaction = t.id`
+            join transaction t on td.idtransaction = t.id
+            join transaction_status ts on t.id_transaction_status = ts.id`
 
             if (query.start && query.end) getDetail += ` where DATE(td.created_at) between ${db.escape(query.start)} and ${db.escape(query.end)}`
             else getDetail
@@ -18,7 +19,7 @@ class Transaction {
     }
     revenue = async (start, end) =>{
         try {
-            let getTransaction = `select * from transaction`
+            let getTransaction = `select t.id, iduser, ts.name as status, invoice, id_city_origin, id_city_destination, address, recipient, postal_code, expedition, postal_code, service, shipping_cost, total_price, note, img_order_url, created_at, update_at  from transaction t join transaction_status ts on t.id_transaction_status = ts.id`
             if(start && end) getTransaction += ` where DATE(created_at) between ${db.escape(start)} and ${db.escape(end)}`
             getTransaction = await dbQuery(getTransaction)
             return getTransaction
@@ -50,7 +51,6 @@ class Transaction {
                 orders.forEach((val) =>{
                     if(item.id == val.idproduct && item.type == val.type){
                         val.created_at = val.created_at.toLocaleDateString()
-                        // val.total_netto = val.qty * val.netto
                         item.orders.push(val)
                     }
                 })
