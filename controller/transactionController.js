@@ -57,7 +57,7 @@ module.exports = {
       let qty = [];
       idproduct.map((item) => {
         // console.log("product", item);
-        return id.push({ idproduct: item.idproduct });
+        return id.push({ idproduct: item.idproduct,idtype:1 });
       });
 
       idproduct.map((item) => {
@@ -77,7 +77,7 @@ module.exports = {
       });
 
       if (dataSearch.length > 0) {
-        qtyStock = `SELECT * FROM stock WHERE ${dataSearch.join(" OR ")}`;
+        qtyStock = `SELECT * FROM stock WHERE ${dataSearch.join(" AND ")}`;
       }
       let stockQty = await dbQuery(qtyStock);
 
@@ -94,28 +94,31 @@ module.exports = {
           }
         });
       });
-      // console.log(checked);
-      // console.log(stockQty.length);
+      console.log('checked',checked);
+      console.log('stock',stockQty);
 
       if (checked.length !== stockQty.length) {
-        let sqlProduct,
-          dataSearch = [];
+        // let sqlProduct,
+        //   dataSearch = [];
 
-        checked.map((item) => {
-          for (let prop in item) {
-            dataSearch.push(`${prop} = ${db.escape(item[prop])}`);
-          }
-        });
+        // checked.map((item) => {
+        //   for (let prop in item) {
+        //     dataSearch.push(`${prop} = ${db.escape(item[prop])}`);
+        //   }
+        // });
 
-        if (dataSearch.length > 0) {
-          sqlProduct = `SELECT product_name from product WHERE ${dataSearch.join(
-            " AND "
-          )}`;
-        }
-        let unavailableProducts = await dbQuery(sqlProduct);
+        // if (dataSearch.length > 0) {
+        //   sqlProduct = `SELECT product_name from product WHERE ${dataSearch.join(
+        //     " AND "
+        //   )}`;
+        // }
+        // let unavailableProducts = await dbQuery(sqlProduct);
         res.status(200).send({
-          message: `${unavailableProducts[0].product_name} not enough stock`,
+          message: `your product not enough stock`,
         });
+        // res.status(200).send({
+        //   message: `${unavailableProducts[0].product_name} not enough stock`,
+        // });
       } else {
         let postTransaction = `INSERT INTO transaction SET ?`;
         let transaction = await dbQuery(postTransaction, {
@@ -319,7 +322,7 @@ module.exports = {
     let qty = [];
     products.map((item) => {
       // console.log("product", item);
-      return id.push({ idproduct: item.idproduct });
+      return id.push({ idproduct: item.idproduct,idtype:2 });
     });
 
     products.map((item) => {
@@ -339,7 +342,7 @@ module.exports = {
     });
 
     if (dataSearch.length > 0) {
-      qtyStock = `SELECT * FROM stock WHERE ${dataSearch.join(" OR ")}`;
+      qtyStock = `SELECT * FROM stock WHERE ${dataSearch.join(" AND ")}`;
     }
     let stockQty = await dbQuery(qtyStock);
 
@@ -354,8 +357,8 @@ module.exports = {
         }
       });
     });
-    // console.log(checked);
-    // console.log(stockQty.length);
+    console.log(checked);
+    console.log(stockQty.length);
 
     if (checked.length !== stockQty.length) {
       let sqlProduct,
@@ -399,7 +402,7 @@ module.exports = {
         let updateStock = dbQuery(
           `UPDATE stock SET total_netto=total_netto-${db.escape(
             item.total_netto
-          )} WHERE idproduct=${db.escape(item.idproduct)}`
+          )},qty=CEIL(Abs(total_netto/${db.escape(item.netto)})) WHERE idproduct=${db.escape(item.idproduct)} AND idtype=${db.escape(2)}`
         );
       });
       res.status(200).send({ message: "success serve perscription" });

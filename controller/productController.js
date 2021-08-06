@@ -503,9 +503,9 @@ module.exports = {
             iduser
           )}`
         );
-        res.status(200).send(`Increment success`);
+        res.status(200).send(stock[0]);
       } else {
-        res.status(200).send({ message: `Out Of Stock Product` });
+        res.status(200).send({ message: `Out Of Stock Product`,data:stock[0] });
       }
     } catch (error) {
       next(error);
