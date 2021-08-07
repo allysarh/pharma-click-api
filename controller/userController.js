@@ -821,12 +821,19 @@ module.exports = {
       let historyTrans,
         dataSearch = [];
       for (let prop in req.query) {
-        dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
+        if (prop.includes("id")) {
+          let a = prop;
+          const b = ["id"];
+          a = a.replace(new RegExp(b.join("|"), "g"), "t.id");
+          dataSearch.push(`${a} = ${db.escape(req.query[prop])}`);
+        } else {
+          dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
+        }
       }
 
       if (dataSearch.length > 0) {
         let { idtype } = req.params;
-        historyTrans = `SELECT t.id, t.iduser as iduser, t.invoice,c.name as origin, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note, t.review FROM transaction t 
+        historyTrans = `SELECT t.id, t.iduser as iduser, t.invoice,c.name as origin, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note,t.img_order_url,t.id_city_origin,t.id_city_destination,t.expedition,t.service FROM transaction t 
         join user u on u.iduser=t.iduser 
         join transaction_status ts on t.id_transaction_status=ts.id 
         join city c on t.id_city_origin = c.id 
@@ -837,11 +844,12 @@ module.exports = {
           historyTrans += ` and t.iduser = ${req.user.iduser}`
         }
       } else {
-        historyTrans = `SELECT t.id, t.iduser as iduser, t.invoice,c.name as origin, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note, t.review FROM transaction t 
+        historyTrans = `SELECT t.id, t.iduser as iduser, t.invoice,c.name as destination, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note,t.img_order_url,t.id_city_origin,t.id_city_destination,t.expedition,t.service,es.name FROM transaction t 
         join user u on u.iduser=t.iduser 
         join transaction_status ts on t.id_transaction_status=ts.id 
-        join city c on t.id_city_origin = c.id 
-        join city ct on ct.id = t.id_city_destination`;
+        join city c on t.id_city_destination = c.id 
+        join city ct on ct.id = t.id_city_destination
+        join expedition_status es on es.id = t.service`;
         if (req.user.role == "user") {
           historyTrans += ` where iduser = ${req.user.iduser}`
         }
@@ -861,11 +869,11 @@ module.exports = {
       }
 
       if (dataSearch.length > 0) {
-        transactionDetail = `select * from transaction_detail td join transaction t on td.idtransaction = t.id join product p on p.id = td.idproduct join product_image pi on pi.idproduct = td.idproduct where ${dataSearch.join(
+        transactionDetail = `select s.*,t.*,p.*,pi.*,td.qty_buy,td.total_netto as qty_buy_total_netto,td.netto as transaction_detail_netto,td.created_at,td.updated_at from transaction_detail td join stock s on s.idproduct = td.idproduct join transaction t on td.idtransaction = t.id join product p on p.id = td.idproduct AND t.idtype=s.idtype join product_image pi on pi.idproduct = td.idproduct where ${dataSearch.join(
           " AND "
         )}`;
       } else {
-        transactionDetail = `select * from transaction_detail td join transaction t on td.idtransaction = t.id join product p on p.id = td.idproduct join product_image pi on pi.idproduct = td.idproduct`;
+        transactionDetail = `select s.*,t.*,p.*,pi.*,td.qty_buy,td.total_netto as qty_buy_total_netto,td.netto as transaction_detail_netto,td.created_at,td.updated_at from transaction_detail td join stock s on s.idproduct = td.idproduct join transaction t on td.idtransaction = t.id join product p on p.id = td.idproduct AND t.idtype=s.idtype join product_image pi on pi.idproduct = td.idproduct`;
       }
       history = await dbQuery(transactionDetail);
 
@@ -874,7 +882,7 @@ module.exports = {
 
       res.status(200).send(history);
     } catch (err) {
-      next(error);
+      next(err);
     }
   },
   setDefault: async (req, res, next) => {
