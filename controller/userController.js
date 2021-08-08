@@ -80,7 +80,7 @@ module.exports = {
           subject: "[PHARMACLICK User Verification]",
           html: `<div style="text-align: center;">
                         <h1> This is email for verify your account</h1>
-                        <p> Click <a href="http://localhost:3000/verif/${token}">this link</a> and input this otp</p>
+                        <p> Click <a href="${process.env.URL}/verif/${token}">this link</a> and input this otp</p>
                         <h1>OTP: ${OTP}</h1>
                         </div>`,
         };
@@ -176,7 +176,7 @@ module.exports = {
                                                                               <td align="center" class="esd-block-text es-p5t es-p5b es-p40r es-m-p0r" esd-links-underline="none">
                                                                               <p>Thank you for choosing PHARMACLICK.</p>
                                                                               <p><br></p>
-                                                                              <p>Please confirm that <strong><a target="_blank" href="mailto:${email}" style="text-decoration: none;">${email}</a></strong>&nbsp;is your email address by input OTP on the button below to <a target="_blank" href="http://localhost:3000/verif/${token}" style="text-decoration: none; word-break: break-all;">this link</a> within <strong>48 hours</strong>.</p>
+                                                                              <p>Please confirm that <strong><a target="_blank" href="mailto:${email}" style="text-decoration: none;">${email}</a></strong>&nbsp;is your email address by input OTP on the button below to <a target="_blank" href="${process.env.URL}/verif/${token}" style="text-decoration: none; word-break: break-all;">this link</a> within <strong>48 hours</strong>.</p>
                                                                               </td>
                                                                               </tr>
                                                                               <tr>
@@ -392,47 +392,21 @@ module.exports = {
       getAddress.forEach((val, i) => {
         address.push(val);
       });
-
-      if (req.user.profile_image) {
-        let mims = mime.contentType(profile_image);
-        //console.log("mimimime pri", mims);
-        const contents = await fs1.readFile(profile_image, {
-          encoding: "base64",
-        });
-        let image = `data:${mims};base64,${contents}`;
-        res.status(200).send({
-          iduser,
-          fullname,
-          gender,
-          age,
-          username,
-          email,
-          role,
-          status,
-          profile_image,
-          cart,
-          address,
-          phone_number,
-          token,
-          image,
-        });
-      } else {
-        res.status(200).send({
-          iduser,
-          fullname,
-          gender,
-          age,
-          username,
-          email,
-          role,
-          status,
-          profile_image,
-          cart,
-          address,
-          phone_number,
-          token,
-        });
-      }
+      res.status(200).send({
+        iduser,
+        fullname,
+        gender,
+        age,
+        username,
+        email,
+        role,
+        status,
+        profile_image,
+        cart,
+        address,
+        phone_number,
+        token,
+      });
     } catch (error) {
       next(error);
     }
@@ -447,7 +421,7 @@ module.exports = {
       }
 
       if (Object.keys(req.query).length > 0) {
-        getUser = `SELECT iduser, fullname, gender, age, username, email, role, status, profile_image, otp 
+        getUser = `SELECT iduser, fullname, gender, age, username, email, role, status, profile_image, otp, created_at, updated_at 
                 from user as u
                 LEFT join role as r
                 on r.idrole = u.idrole
@@ -455,7 +429,7 @@ module.exports = {
                 on s.idstatus = u.idstatus WHERE ${userSearch.join(" AND ")};`;
         //console.log(getUser);
       } else {
-        getUser = `SELECT iduser, fullname, gender, age, username, email, role, status, profile_image, otp 
+        getUser = `SELECT iduser, fullname, gender, age, username, email, role, status, profile_image, otp, created_at, updated_at  
                 from user as u
                 LEFT join role as r
                 on r.idrole = u.idrole
@@ -492,7 +466,6 @@ module.exports = {
         });
       });
 
-      console.log("get user:", getUser);
       res.status(200).send(getUser);
     } catch (error) {
       next(error);
@@ -571,7 +544,7 @@ module.exports = {
                                                                         <td align="center" class="esd-block-text es-p5t es-p5b es-p40r es-m-p0r" esd-links-underline="none">
                                                                             <p>Thank you for choosing PHARMACLICK.</p>
                                                                             <p><br></p>
-                                                                            <p>To reset pasword, please click<strong><a target="_blank" href="mailto:${email}" style="text-decoration: none;">${email}</a></strong>&nbsp;is your email address by input OTP on the button below to <a target="_blank" href="http://localhost:3000/reset/${token}" style="text-decoration: none; word-break: break-all;">this link</a> within <strong>12 hours</strong> or click button below.</p>
+                                                                            <p>To reset pasword, please click<strong><a target="_blank" href="mailto:${email}" style="text-decoration: none;">${email}</a></strong>&nbsp;is your email address by input OTP on the button below to <a target="_blank" href="${process.env.URL}/reset/${token}" style="text-decoration: none; word-break: break-all;">this link</a> within <strong>12 hours</strong> or click button below.</p>
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
@@ -587,7 +560,7 @@ module.exports = {
                                                                     </tr>
                                                                     <tr>
                                                                     <td align="center">
-                                                                        <a href="http://localhost:3000/reset/${token}">
+                                                                        <a href="${process.env.URL}/reset/${token}">
                                                                             <button>
                                                                                 <h4>Reset password</h4>
                                                                             </button>
@@ -653,7 +626,7 @@ module.exports = {
         getSQL = `SELECT a.id,a.tag,a.recipient,a.id_city_origin,a.iduser,c.name,a.address,a.postal_code,a.set_default FROM address a JOIN city c on a.id_city_origin = c.id`;
       }
       getAddress = await dbQuery(getSQL);
-      res.status(200).send(getAddress[0]);
+      res.status(200).send(getAddress);
     } catch (error) {
       next(error);
     }
@@ -661,13 +634,27 @@ module.exports = {
   postAddress: async (req, res, next) => {
     try {
       let { tag, recipient, origin, postalCode, address, iduser } = req.body;
-      postAddress = await dbQuery(
-        `INSERT INTO address (tag,recipient,iduser,id_city_origin,address,postal_code) VALUES(${db.escape(
-          tag
-        )},${db.escape(recipient)},${db.escape(iduser)},${db.escape(
-          origin
-        )},${db.escape(address)},${db.escape(postalCode)})`
-      );
+
+      let cekDefault = await dbQuery(`SELECT * FROM address WHERE set_default = 1 AND iduser = ${db.escape(iduser)}`);
+
+      if (cekDefault.length > 0) {
+        postAddress = await dbQuery(
+          `INSERT INTO address (tag,recipient,iduser,id_city_origin,address,postal_code) VALUES(${db.escape(
+            tag
+          )},${db.escape(recipient)},${db.escape(iduser)},${db.escape(
+            origin
+          )},${db.escape(address)},${db.escape(postalCode)})`
+        );
+      } else {
+        postAddress = await dbQuery(
+          `INSERT INTO address (tag,recipient,iduser,id_city_origin,address,postal_code,created_at,updated_at,set_default) VALUES(${db.escape(
+            tag
+          )},${db.escape(recipient)},${db.escape(iduser)},${db.escape(
+            origin
+          )},${db.escape(address)},${db.escape(postalCode)},now(),now(),${db.escape(1)})`
+        );
+      }
+
       res.status(200).send({ message: "Success added new address" });
     } catch (error) {
       next(error);
@@ -695,8 +682,8 @@ module.exports = {
     try {
       // console.log("req user", req.user);
       const upload = uploaderProfile(
-        "/profile",
-        `IMG#PRFL#USR${req.user.iduser}.`
+        "/profiles",
+        `IMGUSR${req.user.iduser}.`
       ).fields([{ name: "images" }]);
       // const upload = uploader("/profile", "IMG").fields([{ name: "images" }]);
       // let { iduser, fullName, gender, phone_number, email, age } = req.body;
@@ -729,7 +716,7 @@ module.exports = {
             );
 
             if (images !== undefined) {
-              let image_profile = images[0].path;
+              let image_profile = images[0].filename;
 
               patchUsers = await dbQuery(
                 `UPDATE user SET fullname=${db.escape(
@@ -737,7 +724,7 @@ module.exports = {
                 )},gender=${db.escape(json.gender)},age=${db.escape(
                   json.age
                 )},email=${db.escape(json.email)},profile_image=${db.escape(
-                  image_profile
+                  `profiles/${image_profile}`
                 )},age=${db.escape(json.age)},phone_number=${db.escape(
                   json.phoneNumber
                 )} WHERE iduser=${db.escape(req.user.iduser)}`
@@ -776,49 +763,39 @@ module.exports = {
       next(error);
     }
   },
-  getImageUser: async (req, res, next) => {
-    // getImage = await dbQuery(`select profile_image from user`);
-    // console.log("image get", getImage);
-    try {
-      let getSQL,
-        dataSearch = [];
-      for (let prop in req.query) {
-        dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
-      }
+  // getImageUser: async (req, res, next) => {
+  //   // getImage = await dbQuery(`select profile_image from user`);
+  //   // console.log("image get", getImage);
+  //   try {
+  //     let getSQL,
+  //       dataSearch = [];
+  //     for (let prop in req.query) {
+  //       dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
+  //     }
 
-      if (dataSearch.length > 0) {
-        getSQL = `SELECT profile_image from user WHERE ${dataSearch.join(
-          " AND "
-        )}`;
-      } else {
-        getSQL = `SELECT profile_image from user`;
-      }
+  //     if (dataSearch.length > 0) {
+  //       getSQL = `SELECT profile_image from user WHERE ${dataSearch.join(
+  //         " AND "
+  //       )}`;
+  //     } else {
+  //       getSQL = `SELECT profile_image from user`;
+  //     }
 
-      getProfileImage = await dbQuery(getSQL);
+  //     getProfileImage = await dbQuery(getSQL);
 
-      // console.log("waw", getProfileImage[0].profile_image);
-
-
-
-
-      if (getProfileImage.length) {
-        let { profile_image } = getProfileImage[0];
-        if (fs.existsSync(profile_image)) {
-          const contents = await fs1.readFile(profile_image, {
-            encoding: "base64",
-          });
-          let mims = mime.contentType(profile_image);
-          let image = `data:${mims};base64,${contents}`;
-          res.status(200).send({ image_path: profile_image, image_url: image });
-        }
-      } else {
-        res.status(200).send({ message: "image not found" });
-      }
-    } catch (error) {
-      next(error);
-    }
-  },
-
+  //     // console.log("waw", getProfileImage[0].profile_image);
+  //     if (getProfileImage.length) {
+  //       // let { profile_image } = getProfileImage[0];
+  //       if (fs.existsSync(profile_image)) {
+  //         res.status(200).send({ image_path: profile_image, image_url: image });
+  //       }
+  //     } else {
+  //       res.status(200).send({ message: "image not found" });
+  //     }
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // },
   resetPassword: async (req, res, next) => {
     try {
       console.log(req.user);
@@ -843,12 +820,19 @@ module.exports = {
       let historyTrans,
         dataSearch = [];
       for (let prop in req.query) {
-        dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
+        if (prop.includes("id")) {
+          let a = prop;
+          const b = ["id"];
+          a = a.replace(new RegExp(b.join("|"), "g"), "t.id");
+          dataSearch.push(`${a} = ${db.escape(req.query[prop])}`);
+        } else {
+          dataSearch.push(`${prop} = ${db.escape(req.query[prop])}`);
+        }
       }
 
       if (dataSearch.length > 0) {
         let { idtype } = req.params;
-        historyTrans = `SELECT t.id, t.iduser as iduser, t.invoice,c.name as origin, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note FROM transaction t 
+        historyTrans = `SELECT t.id, t.iduser as iduser, t.invoice,c.name as origin, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note,t.img_order_url,t.id_city_origin,t.id_city_destination,t.expedition,t.service,u.fullname FROM transaction t 
         join user u on u.iduser=t.iduser 
         join transaction_status ts on t.id_transaction_status=ts.id 
         join city c on t.id_city_origin = c.id 
@@ -859,16 +843,20 @@ module.exports = {
           historyTrans += ` and t.iduser = ${req.user.iduser}`
         }
       } else {
-        historyTrans = `SELECT * FROM transaction`;
+        historyTrans = `SELECT t.id, t.iduser as iduser, t.invoice,c.name as destination, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note,t.img_order_url,t.id_city_origin,t.id_city_destination,t.expedition,t.service,es.name,u.fullname FROM transaction t 
+        join user u on u.iduser=t.iduser 
+        join transaction_status ts on t.id_transaction_status=ts.id 
+        join city c on t.id_city_destination = c.id 
+        join city ct on ct.id = t.id_city_destination
+        join expedition_status es on es.id = t.service`;
         if (req.user.role == "user") {
           historyTrans += ` where iduser = ${req.user.iduser}`
         }
       }
-
       history = await dbQuery(historyTrans);
       res.status(200).send(history);
     } catch (err) {
-      next(error);
+      next(err);
     }
   },
   getTransactionDetail: async (req, res, next) => {
@@ -951,7 +939,7 @@ module.exports = {
               await dbQuery(`Insert into confirmation_payment values (null,${db.escape(
                 json.idtransaction
               )},${db.escape(json.id_transaction_status)},
-                ${db.escape(image_profile)},now(),now())`);
+                ${db.escape(`transactions/${images[0].filename}`)},now(),now())`);
 
             let updateStatusTransaction = await dbQuery(
               `UPDATE transaction SET id_transaction_status = ${db.escape(
@@ -971,6 +959,28 @@ module.exports = {
       res.status(200).send({ message: "Success Upload Transaction Proof" });
     } catch (error) {
       next(error);
+    }
+  },
+  getTransactionProof: async (req, res, next) => {
+    try {
+      let transProof
+        dataSearch = [];
+      for (let prop in req.params) {
+        dataSearch.push(`${prop} = ${db.escape(req.params[prop])}`);
+      }
+      transProof = `select idtransaction, image_url, name as status, created_at from confirmation_payment cp join transaction_status ts on cp.id_transaction_status = ts.id`
+      if (dataSearch.length > 0) {
+        transProof += ` where ${dataSearch.join(
+          " AND "
+        )}`;
+      }
+      // console.log(transProof)
+      // transProof = `select idtransaction, image_url, name as status, created_at from confirmation_payment cp join transaction_status ts on cp.id_transaction_status = ts.id;`
+      transProof = await dbQuery(transProof)
+
+      res.status(200).send(transProof)
+    } catch (error) {
+      next(error)
     }
   },
   getCity: async (req, res, next) => {

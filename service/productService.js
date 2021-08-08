@@ -8,8 +8,25 @@ module.exports = {
   },
   getStock: (idstock) => {},
   getReviews: (idproduct) => {
-    let dataReview = `select id as idreview, r.iduser, fullname, idproduct, review, rating, r.created_at, r.updated_at from review r left join user as u on r.iduser = u.iduser where r.idproduct = ${idproduct};`;
+    let dataReview
+    if(idproduct){
+      dataReview = `select id as idreview, r.iduser, fullname, idproduct, review, rating, r.created_at, r.updated_at from review r left join user as u on r.iduser = u.iduser where r.idproduct = ${idproduct};`;
+    } else {
+      dataReview = `select id as idreview, r.iduser, fullname, idproduct, review, rating, r.created_at, r.updated_at from review r left join user as u on r.iduser = u.iduser`
+    }
     console.log(dataReview);
     return dbQuery(dataReview);
   },
+  addReviews: (iduser, body) =>{
+    let values = []
+    body.forEach((item, index) =>{
+      values.push(`(${iduser}, ${db.escape(item.idproduct)}, ${db.escape(item.rating)}, ${db.escape(item.review)})`)
+    })
+    let addReview = `INSERT INTO review (iduser, idproduct, rating, review) values ${values.join(',')} `
+    return dbQuery(addReview)
+  },
+  updateReview: (iduser, body) =>{
+    let updateTrans = `UPDATE transaction set review = '1' where id = ${body[0].idtransaction};`
+    return dbQuery(updateTrans)
+  }
 };

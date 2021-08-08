@@ -2,6 +2,11 @@ const { uploader } = require("../config");
 const { dbQuery, db } = require("../config/database");
 const fs = require("fs");
 const fs1 = require("fs").promises;
+const Transactions = require("../service/transactionsService");
+const { parse } = require("dotenv");
+const { detail } = require("../service/transactionsService");
+const { nextTick } = require("process");
+
 var RajaOngkir = require("rajaongkir-nodejs").Starter(
   "8b59fc64454aba0cbdc1fcc8a03daf39"
 );
@@ -19,19 +24,16 @@ module.exports = {
       };
 
       // console.log(params.origin, params.destination, params.weight, "shipping");
-      await RajaOngkir.getJNECost(params)
-        .then(function (result) {
-          let cost = [];
-          result.rajaongkir.results.map((item) => {
-            item.costs.map((item) => {
-              cost.push({ cost: item });
-            });
-          });
-          res.status(200).send(cost);
-        })
-        .catch(function (error) {
-          console.log(error);
+      let result = await RajaOngkir.getJNECost(params)
+      let cost = [];
+      console.log(result)
+      // return results
+      result.rajaongkir.results.map((item) => {
+        item.costs.map((item) => {
+          cost.push({ cost: item });
         });
+      });
+      res.status(200).send(cost);
     } catch (error) {
       next(error);
     }
@@ -49,6 +51,8 @@ module.exports = {
         address,
         recipient,
         postal_code,
+        expedition,
+        service,
         shipping_cost,
         total_price,
         note,
@@ -60,7 +64,7 @@ module.exports = {
       let qty = [];
       idproduct.map((item) => {
         // console.log("product", item);
-        return id.push({ idproduct: item.idproduct });
+        return id.push({ idproduct: item.idproduct, idtype: 1 });
       });
 
       idproduct.map((item) => {
@@ -80,7 +84,7 @@ module.exports = {
       });
 
       if (dataSearch.length > 0) {
-        qtyStock = `SELECT * FROM stock WHERE ${dataSearch.join(" OR ")}`;
+        qtyStock = `SELECT * FROM stock WHERE ${dataSearch.join(" AND ")}`;
       }
       let stockQty = await dbQuery(qtyStock);
 
@@ -97,28 +101,31 @@ module.exports = {
           }
         });
       });
-      // console.log(checked);
-      // console.log(stockQty.length);
+      console.log('checked', checked);
+      console.log('stock', stockQty);
 
       if (checked.length !== stockQty.length) {
-        let sqlProduct,
-          dataSearch = [];
+        // let sqlProduct,
+        //   dataSearch = [];
 
-        checked.map((item) => {
-          for (let prop in item) {
-            dataSearch.push(`${prop} = ${db.escape(item[prop])}`);
-          }
-        });
+        // checked.map((item) => {
+        //   for (let prop in item) {
+        //     dataSearch.push(`${prop} = ${db.escape(item[prop])}`);
+        //   }
+        // });
 
-        if (dataSearch.length > 0) {
-          sqlProduct = `SELECT product_name from product WHERE ${dataSearch.join(
-            " AND "
-          )}`;
-        }
-        let unavailableProducts = await dbQuery(sqlProduct);
+        // if (dataSearch.length > 0) {
+        //   sqlProduct = `SELECT product_name from product WHERE ${dataSearch.join(
+        //     " AND "
+        //   )}`;
+        // }
+        // let unavailableProducts = await dbQuery(sqlProduct);
         res.status(200).send({
-          message: `${unavailableProducts[0].product_name} not enough stock`,
+          message: `your product not enough stock`,
         });
+        // res.status(200).send({
+        //   message: `${unavailableProducts[0].product_name} not enough stock`,
+        // });
       } else {
         let postTransaction = `INSERT INTO transaction SET ?`;
         let transaction = await dbQuery(postTransaction, {
@@ -130,6 +137,8 @@ module.exports = {
           address: address,
           recipient: recipient,
           postal_code: postal_code,
+          expedition: expedition,
+          service: service,
           shipping_cost: shipping_cost,
           total_price: total_price,
           note: note,
@@ -142,6 +151,7 @@ module.exports = {
             idtransaction: transaction.insertId,
             qty_buy: item.qty_product,
             netto: item.netto,
+            total_netto: item.netto * item.qty_product,
           });
         });
         idproduct.map((item) => {
@@ -149,7 +159,7 @@ module.exports = {
             `UPDATE stock SET qty= qty-${db.escape(
               item.qty_product
             )},total_netto=total_netto-${db.escape(
-              item.total_netto
+              item.netto * item.qty_product
             )} WHERE idproduct=${db.escape(item.idproduct)}`
           );
         });
@@ -179,6 +189,8 @@ module.exports = {
         address,
         recipient,
         postal_code,
+        expedition,
+        service,
         shipping_cost,
         total_price,
         note,
@@ -199,12 +211,13 @@ module.exports = {
         try {
           var json = JSON.parse(req.body.data);
           const { images } = req.files;
+
+          console.log("req body data", json);
           // console.log(images);
-          console.log("req body data", req.body);
           //console.log("cek file upload :", images);
 
           if (images !== undefined) {
-            let image_profile = images[0].path;
+            let image_profile = images[0].filename;
             let postTransaction = `INSERT INTO transaction SET ?`;
             let transactionPerscription = await dbQuery(postTransaction, {
               iduser: iduser,
@@ -215,11 +228,13 @@ module.exports = {
               address: json.address,
               recipient: json.recipient,
               postal_code: json.postal_code,
+              expedition: json.expedition,
+              service: json.service,
               shipping_cost: json.shipping_cost,
               total_price: json.total_price,
               note: json.note,
               idtype: json.idtype,
-              img_order_url: image_profile,
+              img_order_url: `perscription/${image_profile}`,
             });
           }
         } catch (error) {
@@ -238,7 +253,7 @@ module.exports = {
     } catch (error) {
       console.log(error);
     }
-  },deleteProductCart: async (req, res, next) => {
+  }, deleteProductCart: async (req, res, next) => {
     try {
       let { idproduct, iduser } = req.query;
       console.log(req.query);
@@ -255,4 +270,225 @@ module.exports = {
       next(error);
     }
   },
-};
+  getTransaction: async (req, res, next) => {
+    try {
+      let transactionSQL, transactions,
+        dataSearch = [];
+      for (let prop in req.params) {
+        dataSearch.push(`${prop} = ${db.escape(req.params[prop])}`);
+      }
+
+      if (dataSearch.length > 0) {
+        transactionSQL = await dbQuery(`SELECT * FROM transaction where ${dataSearch.join(
+          " AND "
+        )}`)
+      } else {
+        transactionSQL = await dbQuery(`SELECT * FROM transaction `)
+      }
+      res.status(200).send(transactionSQL)
+    } catch (error) {
+      next(error)
+    }
+  },
+  salesReport: async (req, res, next) => {
+    try {
+      let getDetail = await Transactions.detail(req.query)
+
+      getDetail.forEach((item, index) => {
+        let date = item.created_at.toLocaleDateString().split('/')
+        item.created_at = item.created_at.toLocaleDateString()
+        item.updated_at = item.updated_at
+        item.month = parseInt(date[0])
+        item.day = parseInt(date[1])
+        item.year = parseInt(date[2])
+        let week = Math.floor(date[1] / 7)
+        item.week = week > 0 ? week : week += 1
+        delete item.updated_at
+      })
+
+      let response = [{ total_product: 0, total_qty: 0, detail: [] }]
+      let filteredDetail = getDetail.filter((item) => item.status == "done" || item.status == "onprogress")
+      let unconfirmedDetail = getDetail.filter((item) => item.status == "request" || item.status == "waiting")
+      response[0].detail = filteredDetail
+
+      let total_qty = filteredDetail.reduce((a, b) => a + b.qty_buy, 0)
+      let total_product = filteredDetail.map(item => item.product_name).filter((item, index, self) => self.indexOf(item) == index).length
+
+      response[0].total_qty = total_qty
+      response[0].total_product = total_product
+      response[0].unconfirmed = unconfirmedDetail
+      response[0].total_unconfirmed = unconfirmedDetail.reduce((a, b) => a + b.qty_buy, 0)
+
+      res.status(200).send(response)
+    } catch (error) {
+      next(error)
+    }
+  },
+  acceptTransaction: async (req, res, next) => {
+    try {
+      let { id } = req.params
+      let { iduser } = req.user
+      console.log(req.user)
+      console.log(req.params)
+      if (req.user.role === "admin") {
+        acceptSQL = await dbQuery(`UPDATE transaction SET id_transaction_status = 1 WHERE id=${db.escape(id)}`)
+      }
+      res.status(200).send({ message: "success aceppt transaction" })
+    } catch (error) {
+      next(error)
+    }
+  },
+  revenue: async (req, res, next) => {
+    try {
+
+      let getTransactions = await Transactions.revenue(req.query.start, req.query.end)
+      getTransactions.forEach((item) => {
+        let date = item.created_at.toLocaleDateString().split('/')
+        item.created_at = item.created_at.toLocaleDateString()
+        item.updated_at = item.updated_at
+        item.month = parseInt(date[0])
+        item.day = parseInt(date[1])
+        item.year = parseInt(date[2])
+        let week = Math.floor(date[1] / 7)
+        item.week = week > 0 ? week : week += 1
+        delete item.updated_at
+
+      })
+      let transactions = getTransactions.filter((item) => item.status == "done" || item.status == "onprogress")
+      let unconfirmedTransactions = getTransactions.filter((item) => item.status == "request" || item.status == "waiting")
+      let revenue = [{ total_revenue: 0, total_user: 0, total_transactions: 0, transactions, unconfirmedTransactions }]
+
+      revenue[0].total_transactions = transactions.length
+      revenue[0].total_unconfirmed_trans = unconfirmedTransactions.length
+      revenue[0].total_unconfirmed_revenue = unconfirmedTransactions.map(item => item.total_price - item.shipping_cost).reduce((a, b) => a + b, 0)
+      revenue[0].total_revenue = transactions.map(item => item.total_price - item.shipping_cost).reduce((a, b) => a + b, 0)
+      revenue[0].total_user = transactions.map(item => item.iduser).filter((item, index, self) => self.indexOf(item) == index).length
+      res.status(200).send(revenue)
+    } catch (error) {
+      next(error)
+    }
+  },
+  rejectTransaction: async (req, res, next) => {
+    try {
+      let { id } = req.params
+      let { iduser } = req.user
+      console.log(req.user)
+      console.log(req.params)
+      if (req.user.role === "admin") {
+        acceptSQL = await dbQuery(`UPDATE transaction SET id_transaction_status = 3 WHERE id=${db.escape(id)}`)
+      }
+      res.status(200).send({ message: "success reject transaction" })
+    } catch (error) {
+      next(error)
+    }
+  },
+  productSales: async (req, res, next) => {
+    try {
+      let productSales = await Transactions.productSales()
+      res.status(200).send(productSales)
+    } catch (error) {
+      nextTick(error)
+    }
+
+
+  },
+  servePerscription: async (req, res, next) => {
+    try {
+      console.log(req.user)
+      let { idtransaction, products, destination, postalCode, recipient, note, address, expedition, service, shippingCost } = req.body
+      //CHECK STOCK BEFORE CONTINUE BUYING
+      let id = [];
+      let qty = [];
+      products.map((item) => {
+        // console.log("product", item);
+        return id.push({ idproduct: item.idproduct, idtype: 2 });
+      });
+
+      products.map((item) => {
+        return qty.push({
+          total_netto: item.total_netto,
+          idproduct: item.idproduct,
+        });
+      });
+
+      let qtyStock,
+        dataSearch = [];
+
+      id.map((item) => {
+        for (let prop in item) {
+          dataSearch.push(`${prop} = ${db.escape(item[prop])}`);
+        }
+      });
+
+      if (dataSearch.length > 0) {
+        qtyStock = `SELECT * FROM stock WHERE ${dataSearch.join(" AND ")}`;
+      }
+      let stockQty = await dbQuery(qtyStock);
+
+      let checked = [];
+
+      stockQty.map((item, idx) => {
+        return qty.map((val) => {
+          if (item.idproduct === val.idproduct) {
+            if (item.total_netto >= val.total_netto) {
+              checked.push({ id: val.idproduct });
+            }
+          }
+        });
+      });
+      console.log(checked);
+      console.log(stockQty.length);
+
+      if (checked.length !== stockQty.length) {
+        let sqlProduct,
+          dataSearch = [];
+
+        checked.map((item) => {
+          for (let prop in item) {
+            dataSearch.push(`${prop} = ${db.escape(item[prop])}`);
+          }
+        });
+
+        if (dataSearch.length > 0) {
+          sqlProduct = `SELECT product_name from product WHERE ${dataSearch.join(
+            " AND "
+          )}`;
+        }
+        let unavailableProducts = await dbQuery(sqlProduct);
+        res.status(200).send({
+          message: `${unavailableProducts[0].product_name} not enough stock`,
+        });
+      } else {
+        let postTransaction = `UPDATE transaction SET ?`;
+        let transaction = await dbQuery(postTransaction, {
+          shipping_cost: shippingCost,
+          id_transaction_status: 6,
+          total_price: products.reduce(
+            (a, v) => (a = a + v.unit_price + parseInt(shippingCost)), 0),
+        });
+        let sql = `INSERT INTO transaction_detail SET ?`;
+        products.map((item) => {
+          let transactions = dbQuery(sql, {
+            idproduct: item.idproduct,
+            idtransaction: idtransaction,
+            qty_buy: Math.ceil(Math.abs(item.total_netto / item.netto)),
+            netto: item.netto,
+            total_netto: item.total_netto,
+          });
+        });
+
+        products.map((item) => {
+          let updateStock = dbQuery(
+            `UPDATE stock SET total_netto=total_netto-${db.escape(
+              item.total_netto
+            )},qty=CEIL(Abs(total_netto/${db.escape(item.netto)})) WHERE idproduct=${db.escape(item.idproduct)} AND idtype=${db.escape(2)}`
+          );
+        });
+        res.status(200).send({ message: "success serve perscription" });
+      }
+    } catch (error) {
+      next(error)
+    }
+  }
+
+}
