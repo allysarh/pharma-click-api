@@ -26,6 +26,8 @@ module.exports = {
       // console.log(params.origin, params.destination, params.weight, "shipping");
       let result = await RajaOngkir.getJNECost(params)
       let cost = [];
+      console.log(result)
+      // return results
       result.rajaongkir.results.map((item) => {
         item.costs.map((item) => {
           cost.push({ cost: item });
@@ -301,13 +303,17 @@ module.exports = {
       })
 
       let response = [{ total_product: 0, total_qty: 0, detail: [] }]
-      response[0].detail = getDetail
-      total_qty = getDetail.reduce((a, b) => a + b.qty_buy, 0)
+      let filteredDetail = getDetail.filter((item) => item.status == "done" || item.status == "onprogress")
+      let unconfirmedDetail = getDetail.filter((item) => item.status == "request" || item.status == "waiting")
+      response[0].detail = filteredDetail
 
-      let total_product = getDetail.map(item => item.product_name).filter((item, index, self) => self.indexOf(item) == index).length
+      let total_qty = filteredDetail.reduce((a, b) => a + b.qty_buy, 0)
+      let total_product = filteredDetail.map(item => item.product_name).filter((item, index, self) => self.indexOf(item) == index).length
+      
       response[0].total_qty = total_qty
       response[0].total_product = total_product
-
+      response[0].unconfirmed = unconfirmedDetail
+      response[0].total_unconfirmed = unconfirmedDetail.reduce((a, b) => a + b.qty_buy, 0)
 
       res.status(200).send(response)
     } catch (error) {
@@ -330,9 +336,9 @@ module.exports = {
   },
   revenue: async (req, res, next) => {
     try {
-      
-      let transactions = await Transactions.revenue(req.query.start, req.query.end)
-      transactions.forEach((item) => {
+
+      let getTransactions = await Transactions.revenue(req.query.start, req.query.end)
+      getTransactions.forEach((item) => {
         let date = item.created_at.toLocaleDateString().split('/')
         item.created_at = item.created_at.toLocaleDateString()
         item.updated_at = item.updated_at
@@ -344,13 +350,16 @@ module.exports = {
         delete item.updated_at
 
       })
-      let revenue = [{ total_revenue: 0, total_user: 0, total_transactions: 0, transactions }]
-    
+      let transactions = getTransactions.filter((item) => item.status == "done" || item.status == "onprogress")
+      let unconfirmedTransactions = getTransactions.filter((item) => item.status == "request" || item.status == "waiting")
+      let revenue = [{ total_revenue: 0, total_user: 0, total_transactions: 0, transactions, unconfirmedTransactions }]
+
       revenue[0].total_transactions = transactions.length
+      revenue[0].total_unconfirmed_trans = unconfirmedTransactions.length
+      revenue[0].total_unconfirmed_revenue = unconfirmedTransactions.map(item => item.total_price - item.shipping_cost).reduce((a, b) => a + b, 0)
       revenue[0].total_revenue = transactions.map(item => item.total_price - item.shipping_cost).reduce((a, b) => a + b, 0)
       revenue[0].total_user = transactions.map(item => item.iduser).filter((item, index, self) => self.indexOf(item) == index).length
       res.status(200).send(revenue)
-      // res.status(200).send("OK")
     } catch (error) {
       next(error)
     }
