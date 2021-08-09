@@ -832,7 +832,7 @@ module.exports = {
 
       if (dataSearch.length > 0) {
         let { idtype } = req.params;
-        historyTrans = `SELECT t.id, t.iduser as iduser, t.invoice,c.name as origin, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note,t.img_order_url,t.id_city_origin,t.id_city_destination,t.expedition,t.service,u.fullname FROM transaction t 
+        historyTrans = `SELECT t.id,t.idtype,u.fullname, t.iduser as iduser, t.invoice,c.name as origin, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note,t.img_order_url,t.id_city_origin,t.id_city_destination,t.expedition,t.service FROM transaction t 
         join user u on u.iduser=t.iduser 
         join transaction_status ts on t.id_transaction_status=ts.id 
         join city c on t.id_city_origin = c.id 
@@ -843,12 +843,12 @@ module.exports = {
           historyTrans += ` and t.iduser = ${req.user.iduser}`
         }
       } else {
-        historyTrans = `SELECT t.id, t.iduser as iduser, t.invoice,c.name as destination, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note,t.img_order_url,t.id_city_origin,t.id_city_destination,t.expedition,t.service,es.name,u.fullname FROM transaction t 
+        historyTrans = `SELECT t.id,t.idtype,u.fullname, t.iduser as iduser, t.invoice,c.name as destination, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note,t.img_order_url,t.id_city_origin,t.id_city_destination,t.expedition,t.service FROM transaction t 
         join user u on u.iduser=t.iduser 
         join transaction_status ts on t.id_transaction_status=ts.id 
         join city c on t.id_city_destination = c.id 
         join city ct on ct.id = t.id_city_destination
-        join expedition_status es on es.id = t.service`;
+        `;
         if (req.user.role == "user") {
           historyTrans += ` where iduser = ${req.user.iduser}`
         }
@@ -867,21 +867,31 @@ module.exports = {
         dataSearch.push(`${prop} = ${db.escape(req.params[prop])}`);
       }
 
-      if (dataSearch.length > 0) {
-        transactionDetail = `select * from transaction_detail td join transaction t on td.idtransaction = t.id join product p on p.id = td.idproduct join product_image pi on pi.idproduct = td.idproduct where ${dataSearch.join(
-          " AND "
-        )}`;
-      } else {
-        transactionDetail = `select * from transaction_detail td join transaction t on td.idtransaction = t.id join product p on p.id = td.idproduct join product_image pi on pi.idproduct = td.idproduct`;
+      let cekTransactionDetail = await dbQuery(`SELECT * from transaction_detail WHERE idtransaction = ${db.escape(req.params.idtransaction)}`)
+      console.log(req.params)
+
+      console.log(cekTransactionDetail)
+
+      if (cekTransactionDetail.length > 0){
+        if (dataSearch.length > 0) {
+          transactionDetail = `select s.*,t.*,p.*,pi.*,td.qty_buy,td.total_netto as qty_buy_total_netto,td.netto as transaction_detail_netto,td.created_at,td.updated_at from transaction_detail td join stock s on s.idproduct = td.idproduct join transaction t on td.idtransaction = t.id join product p on p.id = td.idproduct AND t.idtype=s.idtype join product_image pi on pi.idproduct = td.idproduct where ${dataSearch.join(
+            " AND "
+          )}`;
+        } else {
+          transactionDetail = `select s.*,t.*,p.*,pi.*,td.qty_buy,td.total_netto as qty_buy_total_netto,td.netto as transaction_detail_netto,td.created_at,td.updated_at from transaction_detail td join stock s on s.idproduct = td.idproduct join transaction t on td.idtransaction = t.id join product p on p.id = td.idproduct AND t.idtype=s.idtype join product_image pi on pi.idproduct = td.idproduct`;
+        }
+        history = await dbQuery(transactionDetail);
+  
+        // console.log(transactions);
+        res.status(200).send(history);
+      }else{
+        transactionDetail = `SELECT * from transaction where id = ${req.params.idtransaction}`
+        history = await dbQuery(transactionDetail);
+
+        res.status(200).send(history);
       }
-      history = await dbQuery(transactionDetail);
-
-      transactions = [];
-      // console.log(transactions);
-
-      res.status(200).send(history);
     } catch (err) {
-      next(error);
+      next(err);
     }
   },
   setDefault: async (req, res, next) => {
