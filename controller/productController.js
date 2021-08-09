@@ -13,7 +13,6 @@ module.exports = {
     try {
 
       let getProduct = productService.getProduct(req.params.idtype)
-
       if (Object.keys(req.query).length > 0) {
         let searchQuery = []
         let sortQuery = []
@@ -176,7 +175,7 @@ module.exports = {
           let addStock = `INSERT into stock values (null, ${addProduct.insertId
             }, 2, ${db.escape(stock[0].qty)}, ${db.escape(
               stock[0].total_netto
-            )}, null, 1);`;
+            )}, ${db.escape(pack_price/netto)}, 1);`;
           await dbQuery(addStock);
 
           res
@@ -374,7 +373,7 @@ module.exports = {
             stock[0].qty
           )}, total_netto = ${db.escape(
             total_netto
-          )}, idstatus = 1 where id = ${db.escape(stock[0].id)};`;
+          )}, idstatus = 1, unit_price=${db.escape(pack_price/netto)} where id = ${db.escape(stock[0].id)};`;
 
           await dbQuery(editStock);
 
@@ -504,9 +503,9 @@ module.exports = {
             iduser
           )}`
         );
-        res.status(200).send(`Increment success`);
+        res.status(200).send(stock[0]);
       } else {
-        res.status(200).send({ message: `Out Of Stock Product` });
+        res.status(200).send({ message: `Out Of Stock Product`,data:stock[0] });
       }
     } catch (error) {
       next(error);

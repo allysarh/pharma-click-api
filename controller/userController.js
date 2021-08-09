@@ -392,21 +392,21 @@ module.exports = {
       getAddress.forEach((val, i) => {
         address.push(val);
       });
-        res.status(200).send({
-          iduser,
-          fullname,
-          gender,
-          age,
-          username,
-          email,
-          role,
-          status,
-          profile_image,
-          cart,
-          address,
-          phone_number,
-          token,
-        });
+      res.status(200).send({
+        iduser,
+        fullname,
+        gender,
+        age,
+        username,
+        email,
+        role,
+        status,
+        profile_image,
+        cart,
+        address,
+        phone_number,
+        token,
+      });
     } catch (error) {
       next(error);
     }
@@ -466,7 +466,6 @@ module.exports = {
         });
       });
 
-      console.log("get user:", getUser);
       res.status(200).send(getUser);
     } catch (error) {
       next(error);
@@ -638,22 +637,22 @@ module.exports = {
 
       let cekDefault = await dbQuery(`SELECT * FROM address WHERE set_default = 1 AND iduser = ${db.escape(iduser)}`);
 
-      if(cekDefault.length > 0){
+      if (cekDefault.length > 0) {
         postAddress = await dbQuery(
-        `INSERT INTO address (tag,recipient,iduser,id_city_origin,address,postal_code) VALUES(${db.escape(
-          tag
-        )},${db.escape(recipient)},${db.escape(iduser)},${db.escape(
-          origin
-        )},${db.escape(address)},${db.escape(postalCode)})`
-      );
-      }else{
+          `INSERT INTO address (tag,recipient,iduser,id_city_origin,address,postal_code) VALUES(${db.escape(
+            tag
+          )},${db.escape(recipient)},${db.escape(iduser)},${db.escape(
+            origin
+          )},${db.escape(address)},${db.escape(postalCode)})`
+        );
+      } else {
         postAddress = await dbQuery(
-        `INSERT INTO address (tag,recipient,iduser,id_city_origin,address,postal_code,created_at,updated_at,set_default) VALUES(${db.escape(
-          tag
-        )},${db.escape(recipient)},${db.escape(iduser)},${db.escape(
-          origin
-        )},${db.escape(address)},${db.escape(postalCode)},now(),now(),${db.escape(1)})`
-      );
+          `INSERT INTO address (tag,recipient,iduser,id_city_origin,address,postal_code,created_at,updated_at,set_default) VALUES(${db.escape(
+            tag
+          )},${db.escape(recipient)},${db.escape(iduser)},${db.escape(
+            origin
+          )},${db.escape(address)},${db.escape(postalCode)},now(),now(),${db.escape(1)})`
+        );
       }
 
       res.status(200).send({ message: "Success added new address" });
@@ -950,7 +949,7 @@ module.exports = {
               await dbQuery(`Insert into confirmation_payment values (null,${db.escape(
                 json.idtransaction
               )},${db.escape(json.id_transaction_status)},
-                ${db.escape(image_profile)},now(),now())`);
+                ${db.escape(`transactions/${images[0].filename}`)},now(),now())`);
 
             let updateStatusTransaction = await dbQuery(
               `UPDATE transaction SET id_transaction_status = ${db.escape(
@@ -970,6 +969,28 @@ module.exports = {
       res.status(200).send({ message: "Success Upload Transaction Proof" });
     } catch (error) {
       next(error);
+    }
+  },
+  getTransactionProof: async (req, res, next) => {
+    try {
+      let transProof
+        dataSearch = [];
+      for (let prop in req.params) {
+        dataSearch.push(`${prop} = ${db.escape(req.params[prop])}`);
+      }
+      transProof = `select idtransaction, image_url, name as status, created_at from confirmation_payment cp join transaction_status ts on cp.id_transaction_status = ts.id`
+      if (dataSearch.length > 0) {
+        transProof += ` where ${dataSearch.join(
+          " AND "
+        )}`;
+      }
+      // console.log(transProof)
+      // transProof = `select idtransaction, image_url, name as status, created_at from confirmation_payment cp join transaction_status ts on cp.id_transaction_status = ts.id;`
+      transProof = await dbQuery(transProof)
+
+      res.status(200).send(transProof)
+    } catch (error) {
+      next(error)
     }
   },
   getCity: async (req, res, next) => {
