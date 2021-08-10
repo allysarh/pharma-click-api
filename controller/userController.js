@@ -601,9 +601,10 @@ module.exports = {
   },
   deleteAddress: async (req, res, next) => {
     try {
+      let {iduser} = req.user
       //console.log(req.query);
       deleteAddress = await dbQuery(
-        `DELETE FROM address WHERE id=${db.escape(req.query.id)}`
+        `DELETE FROM address WHERE id=${db.escape(req.query.id)} AND iduser = ${db.escape(iduser)}`
       );
       res.status(200).send({ message: "Success delete selected address" });
     } catch (error) {
@@ -633,7 +634,8 @@ module.exports = {
   },
   postAddress: async (req, res, next) => {
     try {
-      let { tag, recipient, origin, postalCode, address, iduser } = req.body;
+      let {iduser} = req.user
+      let { tag, recipient, origin, postalCode, address } = req.body;
 
       let cekDefault = await dbQuery(`SELECT * FROM address WHERE set_default = 1 AND iduser = ${db.escape(iduser)}`);
 
@@ -662,7 +664,8 @@ module.exports = {
   },
   patchAddress: async (req, res, next) => {
     try {
-      let { idaddress, tag, recipient, origin, postalCode, address, iduser } =
+      let {iduser} = req.user
+      let { idaddress, tag, recipient, origin, postalCode, address } =
         req.body;
       postAddress = await dbQuery(
         `UPDATE address SET tag=${db.escape(tag)},recipient=${db.escape(
@@ -671,7 +674,7 @@ module.exports = {
           address
         )},postal_code=${db.escape(postalCode)} WHERE id=${db.escape(
           idaddress
-        )}`
+        )} AND iduser=${db.escape(iduser)}`
       );
       res.status(200).send({ message: "Success edit address" });
     } catch (error) {
@@ -680,18 +683,12 @@ module.exports = {
   },
   patchUser: async (req, res, next) => {
     try {
-      // console.log("req user", req.user);
       const upload = uploaderProfile(
         "/profiles",
         `IMGUSR${req.user.iduser}.`
       ).fields([{ name: "images" }]);
-      // const upload = uploader("/profile", "IMG").fields([{ name: "images" }]);
-      // let { iduser, fullName, gender, phone_number, email, age } = req.body;
-      // console.log("requuestnya body", req.body);
       upload(req, res, async (error) => {
         if (error) {
-          //hapus gambar jika proses upload error
-          // fs.unlinkSync(`./public/profile/${req.user.iduser}`);
           await res
             .status(200)
             .send({ message: "format image must jpeg or jpg" });
@@ -699,15 +696,9 @@ module.exports = {
         } else {
           try {
             var json = JSON.parse(req.body.data);
+            console.log("req body", json);
             const { images } = req.files;
 
-
-            let postProduct = `Insert into products values (null,${db.escape(
-              json.nama
-            )},${db.escape(json.brand)},
-                ${db.escape(json.deskripsi)},${db.escape(json.harga)},
-                ${db.escape(json.idstatus)});`;
-            let postImage = `Insert into user values `;
 
             let getImage = await dbQuery(
               `SELECT profile_image from user where iduser=${db.escape(
@@ -726,7 +717,7 @@ module.exports = {
                 )},email=${db.escape(json.email)},profile_image=${db.escape(
                   `profiles/${image_profile}`
                 )},age=${db.escape(json.age)},phone_number=${db.escape(
-                  json.phoneNumber
+                  json.phone_number
                 )} WHERE iduser=${db.escape(req.user.iduser)}`
               );
             } else {
@@ -832,7 +823,7 @@ module.exports = {
 
       if (dataSearch.length > 0) {
         let { idtype } = req.params;
-        historyTrans = `SELECT t.id, t.iduser as iduser, t.invoice,c.name as origin, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note,t.img_order_url,t.id_city_origin,t.id_city_destination,t.expedition,t.service,u.fullname FROM transaction t 
+        historyTrans = `SELECT t.id,t.idtype,u.fullname, t.iduser as iduser, t.invoice,c.name as origin, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note,t.img_order_url,t.id_city_origin,t.id_city_destination,t.expedition,t.service FROM transaction t 
         join user u on u.iduser=t.iduser 
         join transaction_status ts on t.id_transaction_status=ts.id 
         join city c on t.id_city_origin = c.id 
@@ -843,12 +834,12 @@ module.exports = {
           historyTrans += ` and t.iduser = ${req.user.iduser}`
         }
       } else {
-        historyTrans = `SELECT t.id, t.iduser as iduser, t.invoice,c.name as destination, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note,t.img_order_url,t.id_city_origin,t.id_city_destination,t.expedition,t.service,es.name,u.fullname FROM transaction t 
+        historyTrans = `SELECT t.id,t.idtype,u.fullname, t.iduser as iduser, t.invoice,c.name as destination, ct.name as destination,t.recipient,t.address,t.postal_code,t.shipping_cost,ts.name as status_name,t.total_price,t.note,t.img_order_url,t.id_city_origin,t.id_city_destination,t.expedition,t.service FROM transaction t 
         join user u on u.iduser=t.iduser 
         join transaction_status ts on t.id_transaction_status=ts.id 
         join city c on t.id_city_destination = c.id 
         join city ct on ct.id = t.id_city_destination
-        join expedition_status es on es.id = t.service`;
+        `;
         if (req.user.role == "user") {
           historyTrans += ` where iduser = ${req.user.iduser}`
         }
@@ -867,26 +858,37 @@ module.exports = {
         dataSearch.push(`${prop} = ${db.escape(req.params[prop])}`);
       }
 
-      if (dataSearch.length > 0) {
-        transactionDetail = `select * from transaction_detail td join transaction t on td.idtransaction = t.id join product p on p.id = td.idproduct join product_image pi on pi.idproduct = td.idproduct where ${dataSearch.join(
-          " AND "
-        )}`;
-      } else {
-        transactionDetail = `select * from transaction_detail td join transaction t on td.idtransaction = t.id join product p on p.id = td.idproduct join product_image pi on pi.idproduct = td.idproduct`;
+      let cekTransactionDetail = await dbQuery(`SELECT * from transaction_detail WHERE idtransaction = ${db.escape(req.params.idtransaction)}`)
+      console.log(req.params)
+
+      console.log(cekTransactionDetail)
+
+      if (cekTransactionDetail.length > 0){
+        if (dataSearch.length > 0) {
+          transactionDetail = `select s.*,t.*,p.*,pi.*,td.qty_buy,td.total_netto as qty_buy_total_netto,td.netto as transaction_detail_netto,td.created_at,td.updated_at from transaction_detail td join stock s on s.idproduct = td.idproduct join transaction t on td.idtransaction = t.id join product p on p.id = td.idproduct AND t.idtype=s.idtype join product_image pi on pi.idproduct = td.idproduct where ${dataSearch.join(
+            " AND "
+          )}`;
+        } else {
+          transactionDetail = `select s.*,t.*,p.*,pi.*,td.qty_buy,td.total_netto as qty_buy_total_netto,td.netto as transaction_detail_netto,td.created_at,td.updated_at from transaction_detail td join stock s on s.idproduct = td.idproduct join transaction t on td.idtransaction = t.id join product p on p.id = td.idproduct AND t.idtype=s.idtype join product_image pi on pi.idproduct = td.idproduct`;
+        }
+        history = await dbQuery(transactionDetail);
+  
+        // console.log(transactions);
+        res.status(200).send(history);
+      }else{
+        transactionDetail = `SELECT * from transaction where id = ${req.params.idtransaction}`
+        history = await dbQuery(transactionDetail);
+
+        res.status(200).send(history);
       }
-      history = await dbQuery(transactionDetail);
-
-      transactions = [];
-      // console.log(transactions);
-
-      res.status(200).send(history);
     } catch (err) {
-      next(error);
+      next(err);
     }
   },
   setDefault: async (req, res, next) => {
     try {
-      let { idaddress, iduser } = req.body;
+      let {iduser} = req.user
+      let { idaddress } = req.body;
 
       // console.log("cek default", idaddress, iduser);
 
