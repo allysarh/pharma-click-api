@@ -1,6 +1,6 @@
 const multer = require("multer");
 const fs = require("fs");
-const sharp = require("sharp");
+// const sharp = require("sharp");
 
 module.exports = {
   uploader: (directory, fileNamePrefix) => {

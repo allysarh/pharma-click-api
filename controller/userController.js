@@ -13,7 +13,7 @@ var mime = require("mime-types");
 var RajaOngkir = require("rajaongkir-nodejs").Starter(
   "63b5cc834bb0e38090a2b629da2ca394"
 );
-const sharp = require('sharp');
+// const sharp = require('sharp');
 
 module.exports = {
   accVerif: async (req, res, next) => {
