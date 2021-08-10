@@ -457,12 +457,12 @@ module.exports = {
         message: `${unavailableProducts[0].product_name} not enough stock`,
       });
     }else {
-      let postTransaction = `UPDATE transaction SET ?`; 
+      let postTransaction = `UPDATE transaction SET ? WHERE id=${idtransaction}`; 
       let transaction = await dbQuery(postTransaction, {
         shipping_cost: shippingCost,
         id_transaction_status: 6,
         total_price: products.reduce(
-          (a, v) => ((a = a + v.unit_price*v.total_netto) + parseInt(shippingCost/products.length+1)),0),
+          (a, v) => (a = a + v.unit_price*v.total_netto),0) + parseInt(shippingCost/products.length+1),
       });
       let sql = `INSERT INTO transaction_detail SET ?`;
       products.map((item) => {

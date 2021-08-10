@@ -680,18 +680,12 @@ module.exports = {
   },
   patchUser: async (req, res, next) => {
     try {
-      // console.log("req user", req.user);
       const upload = uploaderProfile(
         "/profiles",
         `IMGUSR${req.user.iduser}.`
       ).fields([{ name: "images" }]);
-      // const upload = uploader("/profile", "IMG").fields([{ name: "images" }]);
-      // let { iduser, fullName, gender, phone_number, email, age } = req.body;
-      // console.log("requuestnya body", req.body);
       upload(req, res, async (error) => {
         if (error) {
-          //hapus gambar jika proses upload error
-          // fs.unlinkSync(`./public/profile/${req.user.iduser}`);
           await res
             .status(200)
             .send({ message: "format image must jpeg or jpg" });
@@ -699,15 +693,9 @@ module.exports = {
         } else {
           try {
             var json = JSON.parse(req.body.data);
+            console.log("req body", json);
             const { images } = req.files;
 
-
-            let postProduct = `Insert into products values (null,${db.escape(
-              json.nama
-            )},${db.escape(json.brand)},
-                ${db.escape(json.deskripsi)},${db.escape(json.harga)},
-                ${db.escape(json.idstatus)});`;
-            let postImage = `Insert into user values `;
 
             let getImage = await dbQuery(
               `SELECT profile_image from user where iduser=${db.escape(
@@ -726,7 +714,7 @@ module.exports = {
                 )},email=${db.escape(json.email)},profile_image=${db.escape(
                   `profiles/${image_profile}`
                 )},age=${db.escape(json.age)},phone_number=${db.escape(
-                  json.phoneNumber
+                  json.phone_number
                 )} WHERE iduser=${db.escape(req.user.iduser)}`
               );
             } else {
