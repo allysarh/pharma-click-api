@@ -327,8 +327,6 @@ module.exports = {
   acceptTransaction: async (req, res, next) => {
     try {
       let { id } = req.params
-      let { iduser } = req.user
-      console.log(req.user)
       console.log(req.params)
       if (req.user.role === "admin") {
         acceptSQL = await dbQuery(`UPDATE transaction SET id_transaction_status = 1 WHERE id=${db.escape(id)}`)
@@ -392,8 +390,7 @@ module.exports = {
   },
   servePerscription:async(req,res,next) =>{
     try {
-      console.log(req.user)
-      let {idtransaction,products,destination,postalCode,recipient,note,address,expedition,service,shippingCost,totalPrice} = req.body
+      let {iduser,idtransaction,products,destination,postalCode,recipient,note,address,expedition,service,shippingCost,totalPrice} = req.body
     //CHECK STOCK BEFORE CONTINUE BUYING
     let id = [];
     let qty = [];

@@ -993,4 +993,12 @@ module.exports = {
       next(error);
     }
   },
+  confirmationPayment:async(req,res,next)=>{
+    try {
+      origin = await dbQuery(`SELECT * FROM confirmation_payment WHERE idtransaction=${req.params.idtransaction}`)
+      res.status(200).send(origin)
+    } catch (error) {
+      next(error)
+    }
+  }
 };
