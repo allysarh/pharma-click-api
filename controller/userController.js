@@ -601,9 +601,10 @@ module.exports = {
   },
   deleteAddress: async (req, res, next) => {
     try {
+      let {iduser} = req.user
       //console.log(req.query);
       deleteAddress = await dbQuery(
-        `DELETE FROM address WHERE id=${db.escape(req.query.id)}`
+        `DELETE FROM address WHERE id=${db.escape(req.query.id)} AND iduser = ${db.escape(iduser)}`
       );
       res.status(200).send({ message: "Success delete selected address" });
     } catch (error) {
@@ -633,7 +634,8 @@ module.exports = {
   },
   postAddress: async (req, res, next) => {
     try {
-      let { tag, recipient, origin, postalCode, address, iduser } = req.body;
+      let {iduser} = req.user
+      let { tag, recipient, origin, postalCode, address } = req.body;
 
       let cekDefault = await dbQuery(`SELECT * FROM address WHERE set_default = 1 AND iduser = ${db.escape(iduser)}`);
 
@@ -662,7 +664,8 @@ module.exports = {
   },
   patchAddress: async (req, res, next) => {
     try {
-      let { idaddress, tag, recipient, origin, postalCode, address, iduser } =
+      let {iduser} = req.user
+      let { idaddress, tag, recipient, origin, postalCode, address } =
         req.body;
       postAddress = await dbQuery(
         `UPDATE address SET tag=${db.escape(tag)},recipient=${db.escape(
@@ -671,7 +674,7 @@ module.exports = {
           address
         )},postal_code=${db.escape(postalCode)} WHERE id=${db.escape(
           idaddress
-        )}`
+        )} AND iduser=${db.escape(iduser)}`
       );
       res.status(200).send({ message: "Success edit address" });
     } catch (error) {
@@ -884,7 +887,8 @@ module.exports = {
   },
   setDefault: async (req, res, next) => {
     try {
-      let { idaddress, iduser } = req.body;
+      let {iduser} = req.user
+      let { idaddress } = req.body;
 
       // console.log("cek default", idaddress, iduser);
 

@@ -255,7 +255,7 @@ module.exports = {
     }
   }, deleteProductCart: async (req, res, next) => {
     try {
-      let { idproduct, iduser } = req.query;
+      let { idproduct,iduser } = req.query;
       console.log(req.query);
 
       console.log(idproduct);
@@ -333,7 +333,7 @@ module.exports = {
       if (req.user.role === "admin") {
         acceptSQL = await dbQuery(`UPDATE transaction SET id_transaction_status = 1 WHERE id=${db.escape(id)}`)
       }
-      res.status(200).send({ message: "success aceppt transaction" })
+      res.status(200).send({ message: "success accept transaction" })
     } catch (error) {
       next(error)
     }
@@ -393,7 +393,7 @@ module.exports = {
   servePerscription:async(req,res,next) =>{
     try {
       console.log(req.user)
-      let {idtransaction,products,destination,postalCode,recipient,note,address,expedition,service,shippingCost} = req.body
+      let {idtransaction,products,destination,postalCode,recipient,note,address,expedition,service,shippingCost,totalPrice} = req.body
     //CHECK STOCK BEFORE CONTINUE BUYING
     let id = [];
     let qty = [];
@@ -461,8 +461,7 @@ module.exports = {
       let transaction = await dbQuery(postTransaction, {
         shipping_cost: shippingCost,
         id_transaction_status: 6,
-        total_price: products.reduce(
-          (a, v) => (a = a + v.unit_price*v.total_netto),0) + parseInt(shippingCost/products.length+1),
+        total_price: totalPrice,
       });
       let sql = `INSERT INTO transaction_detail SET ?`;
       products.map((item) => {
