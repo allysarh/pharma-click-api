@@ -12,7 +12,7 @@ router.post(
   readToken,
   transactionController.perscriptionTransaction
 );
-router.delete("/delete", transactionController.deleteProductCart);
+router.delete("/delete",transactionController.deleteProductCart);
 router.get("/bill", transactionController.getTransaction);
 router.patch("/accept/:id", readToken,transactionController.acceptTransaction);
 router.patch("/reject/:id", readToken,transactionController.rejectTransaction);
