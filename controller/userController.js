@@ -74,6 +74,7 @@ module.exports = {
           profile_image,
           otp,
         });
+        console.log("PROCESS ENV", process.env.URL)
         let mail = {
           from: "PHARMACLICK-ADMIN <allysa.rahagustiani@gmail.com>",
           to: email,
