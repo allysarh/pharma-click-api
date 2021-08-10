@@ -14,9 +14,9 @@ router.post("/forget-pass", userController.forgetPassword);
 router.post("/reset-pass", readToken, userController.resetPassword);
 
 router.get("/get-address", userController.getAddress);
-router.post("/post-address", userController.postAddress);
-router.delete("/delete-address", userController.deleteAddress);
-router.patch("/patch-address", userController.patchAddress);
+router.post("/post-address", readToken,userController.postAddress);
+router.delete("/delete-address", readToken,userController.deleteAddress);
+router.patch("/patch-address", readToken,userController.patchAddress);
 router.get("/sort-transactions", readToken, userController.getHistoryTransaction);
 router.get(
   "/detail-transactions/:idtransaction",
@@ -25,7 +25,7 @@ router.get(
 router.post("/upload-transaction", readToken, userController.uploadTransaction);
 router.patch("/patch-user", readToken, userController.patchUser);
 // router.get("/get-image-user", userController.getImageUser);
-router.patch("/set-default", userController.setDefault);
+router.patch("/set-default", readToken,userController.setDefault);
 router.get("/get-city", userController.getCity);
 router.get('/transfer-proof/:idtransaction', authorization, userController.getTransactionProof)
 module.exports = router;

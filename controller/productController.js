@@ -373,7 +373,7 @@ module.exports = {
             stock[0].qty
           )}, total_netto = ${db.escape(
             total_netto
-          )}, unit_price = ${db.escpe(pack_price/netto)}, idstatus = 1 where id = ${db.escape(stock[0].id)};`;
+          )}, idstatus = 1, unit_price=${db.escape(pack_price/netto)} where id = ${db.escape(stock[0].id)};`;
 
           await dbQuery(editStock);
 
