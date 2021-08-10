@@ -27,5 +27,6 @@ router.patch("/patch-user", readToken, userController.patchUser);
 // router.get("/get-image-user", userController.getImageUser);
 router.patch("/set-default", readToken,userController.setDefault);
 router.get("/get-city", userController.getCity);
+router.get("/confirmation-payment/:idtransaction",userController.confirmationPayment);
 router.get('/transfer-proof/:idtransaction', authorization, userController.getTransactionProof)
 module.exports = router;
