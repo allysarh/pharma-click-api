@@ -33,6 +33,7 @@ db.getConnection((err, connection) => {
 
 // error handling
 app.use((error, req, res, next, detail) => {
+  console.log(error)
   let message = error.message || error
   res.status(500).json({ status: 500, message, source: detail });
 });
