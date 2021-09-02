@@ -17,10 +17,10 @@ class Transaction {
             return error
         }
     }
-    revenue = async (start, end) =>{
+    revenue = async (start, end) => {
         try {
             let getTransaction = `select t.id, iduser, ts.name as status, invoice, id_city_origin, id_city_destination, address, recipient, postal_code, expedition, postal_code, service, shipping_cost, total_price, note, img_order_url, created_at, update_at  from transaction t join transaction_status ts on t.id_transaction_status = ts.id`
-            if(start && end) getTransaction += ` where DATE(created_at) between ${db.escape(start)} and ${db.escape(end)}`
+            if (start && end) getTransaction += ` where DATE(created_at) between ${db.escape(start)} and ${db.escape(end)}`
             getTransaction = await dbQuery(getTransaction)
             return getTransaction
         } catch (error) {
@@ -28,7 +28,7 @@ class Transaction {
         }
     }
 
-    productSales = async() =>{
+    productSales = async () => {
         try {
             let product = `SELECT s.id, s.idproduct, product_name, image_url, t.name as type, qty, total_netto, unit_price, pack_price, unit, ps.name as status from stock as s 
             LEFT JOIN type as t on t.id = s.idtype
@@ -45,16 +45,20 @@ class Transaction {
             left join type ty on ty.id = idtype;`
 
             orders = await dbQuery(orders)
+            // console.log(orders)
             let cos = []
-            product.forEach((item, index) =>{
+            product.forEach((item, index) => {
+
                 item.orders = []
-                orders.forEach((val) =>{
-                    if(item.id == val.idproduct && item.type == val.type){
+                orders.forEach((val) => {
+                    
+                    if(item.idproduct == val.idproduct && item.type == val.type){
                         val.created_at = val.created_at.toLocaleDateString()
                         item.orders.push(val)
                     }
                 })
             })
+            // console.log(product)
             return product
         } catch (error) {
             return error

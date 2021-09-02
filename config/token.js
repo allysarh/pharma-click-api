@@ -7,7 +7,7 @@ module.exports = {
     });
   },
   readToken: (req, res, next) => {
-    jwt.verify(req.token, process.env.JWTSECRET, (err, decoded) => {
+    jwt.verify(req.token, 'ikea$', (err, decoded) => {
       if (err) {
         return res.status(401).send("User not authorized");
       }
